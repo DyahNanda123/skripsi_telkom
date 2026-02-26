@@ -13,10 +13,23 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+
+            // --- data wajib (diinput admin di awal)---
+            $table->string('nama_lengkap');
+            $table->string('nip')->unique(); // agar tidak ada nip yang kembar
             $table->string('password');
+            $table->enum('role', ['admin', 'pimpinan', 'sales']);
+            $table->enum('wilayah_kerja', ['ngawi', 'magetan']);
+
+            // --- data opsional (dilengkap oleh pengguna sendiri) ---
+            $table->string('email')->unique()->nullable();
+            $table->string('nomor_hp')->nullable();
+            $table->text('alamat')->nullable();
+            $table->string('foto_profil')->nullable();
+
+            // --- data sistem (otomatis)---
+            $table->boolean('status_aktif')->default(true);
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

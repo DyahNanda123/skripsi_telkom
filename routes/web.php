@@ -14,5 +14,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    // 1. Kita buat data breadcrumb palsu/dummy dulu agar template tidak error
+    $breadcrumb = (object) [
+        'title' => 'Selamat Datang',
+        'list'  => ['Home', 'Dashboard']
+    ];
+
+    // 2. Kita kirimkan data activeMenu DAN breadcrumb ke halaman web
+    return view('welcome', [
+        'activeMenu' => 'dashboard',
+        'breadcrumb' => $breadcrumb
+    ]);
 });

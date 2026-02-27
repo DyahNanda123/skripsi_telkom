@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     // 1. Kita buat data breadcrumb palsu/dummy dulu agar template tidak error
     $breadcrumb = (object) [
-        'title' => 'Selamat Datang',
+        'title' => 'DASHBOARD',
         'list'  => ['Home', 'Dashboard']
     ];
 
@@ -25,4 +27,15 @@ Route::get('/', function () {
         'activeMenu' => 'dashboard',
         'breadcrumb' => $breadcrumb
     ]);
+});
+
+// Jalur untuk Login & Logout
+Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::post('/login', [AuthController::class, 'authenticate']);
+Route::get('/logout', [AuthController::class, 'logout']);
+
+// Jalur untuk Edit Profil (Hanya bisa diakses kalau sudah login)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'index']);
+    Route::post('/profile/update', [ProfileController::class, 'update']);
 });

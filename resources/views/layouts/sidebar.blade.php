@@ -29,13 +29,13 @@
 
             <li class="nav-header">Data Master</li>
             <li class="nav-item">
-                <a href="{{ url('/user') }}" class="nav-link {{ $activeMenu == 'user' ? 'active' : '' }}">
+                <a href="{{ url('/pengguna') }}" class="nav-link {{ ($activeMenu == 'pengguna') ? 'active' : '' }}">
                     <i class="nav-icon fas fa-users"></i>
                     <p>Data Karyawan</p>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url('/calon-pelanggan') }}" class="nav-link {{ $activeMenu == 'calon_pelanggan' ? 'active' : '' }}">
+                <a href="{{ url('/calon_pelanggan') }}" class="nav-link {{ $activeMenu == 'calon_pelanggan' ? 'active' : '' }}">
                     <i class="nav-icon fas fa-building"></i>
                     <p>Calon Pelanggan</p>
                 </a>

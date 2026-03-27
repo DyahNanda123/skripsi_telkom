@@ -68,20 +68,20 @@
 
         <li class="nav-item dropdown user-menu">
             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                <img src="{{ auth()->user()->foto_profil ? asset('storage/' . auth()->user()->foto_profil) : asset('adminlte/dist/img/user2-160x160.jpg') }}" 
+                <img src="{{ (auth()->check() && auth()->user()->foto_profil) ? asset('storage/' . auth()->user()->foto_profil) : asset('adminlte/dist/img/user2-160x160.jpg') }}" 
                      class="user-image img-circle elevation-2" alt="Foto Profil" style="object-fit: cover;">
                 
                 <span class="d-none d-md-inline font-weight-bold">
-                    {{ auth()->check() ? strtoupper(auth()->user()->role) : 'ADMIN' }}
+                    {{ auth()->check() ? strtoupper(auth()->user()->role) : 'GUEST' }}
                 </span>
             </a>
             <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                 <li class="user-header bg-danger">
-                    <img src="{{ auth()->user()->foto_profil ? asset('storage/' . auth()->user()->foto_profil) : asset('adminlte/dist/img/user2-160x160.jpg') }}" 
+                    <img src="{{ (auth()->check() && auth()->user()->foto_profil) ? asset('storage/' . auth()->user()->foto_profil) : asset('adminlte/dist/img/user2-160x160.jpg') }}" 
                          class="img-circle elevation-2" alt="Foto Profil" style="object-fit: cover;">
                     <p>
-                        {{ auth()->check() ? auth()->user()->nama_lengkap : 'Pengguna Telkom' }}
-                        <small>{{ auth()->check() ? strtoupper(auth()->user()->role) : 'ADMIN' }}</small>
+                        {{ auth()->check() ? auth()->user()->nama_lengkap : 'Pengguna Belum Login' }}
+                        <small>{{ auth()->check() ? strtoupper(auth()->user()->role) : 'GUEST' }}</small>
                     </p>
                 </li>
                 <li class="user-footer">

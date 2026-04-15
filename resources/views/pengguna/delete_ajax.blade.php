@@ -32,7 +32,6 @@
             let btn = form.find('button[type="submit"]');
             let btnAsli = btn.html();
             
-            // Efek Loading
             btn.html('<i class="fas fa-spinner fa-spin"></i> Loading...').prop('disabled', true);
             
             $.ajax({

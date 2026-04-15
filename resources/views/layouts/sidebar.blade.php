@@ -1,17 +1,7 @@
 <div class="sidebar">
-    {{-- <div class="form-inline mt-2">
-        <div class="input-group" data-widget="sidebar-search">
-            <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-            <div class="input-group-append">
-                <button class="btn btn-sidebar">
-                    <i class="fas fa-search fa-fw"></i>
-                </button>
-            </div>
-        </div>
-    </div> --}}
-
+    
     <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             
             <li class="nav-item">
                 <a href="{{ url('/') }}" class="nav-link {{ $activeMenu == 'dashboard' ? 'active' : '' }}">
@@ -19,21 +9,18 @@
                     <p>Dashboard</p>
                 </a>
             </li>
-            
-            {{-- <li class="nav-item">
-                <a href="{{ url('/profile') }}" class="nav-link {{ $activeMenu == 'profile' ? 'active' : '' }}">
-                    <i class="nav-icon far fa-address-card"></i>
-                    <p>Profile</p>
-                </a>
-            </li> --}}
 
             <li class="nav-header">Data Master</li>
-            <li class="nav-item">
-                <a href="{{ url('/pengguna') }}" class="nav-link {{ ($activeMenu == 'pengguna') ? 'active' : '' }}">
-                    <i class="nav-icon fas fa-users"></i>
-                    <p>Data Karyawan</p>
-                </a>
-            </li>
+
+                @if(auth()->user()->role == 'admin')
+                    <li class="nav-item">
+                        <a href="{{ url('/pengguna') }}" class="nav-link {{ $activeMenu == 'pengguna' ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Data Pengguna</p>
+                        </a>
+                    </li>
+                @endif
+                
             <li class="nav-item">
                 <a href="{{ url('/calon_pelanggan') }}" class="nav-link {{ $activeMenu == 'calon_pelanggan' ? 'active' : '' }}">
                     <i class="nav-icon fas fa-building"></i>
@@ -49,15 +36,9 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url('/target-sales') }}" class="nav-link {{ $activeMenu == 'target_sales' ? 'active' : '' }}">
-                    <i class="nav-icon fas fa-bullseye"></i>
-                    <p>Target Sales</p>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ url('/strategi-promosi') }}" class="nav-link {{ $activeMenu == 'strategi_promosi' ? 'active' : '' }}">
-                    <i class="nav-icon fas fa-bullhorn"></i>
-                    <p>Strategi Promosi</p>
+                <a href="{{ url('/strategi-target') }}" class="nav-link {{ $activeMenu == 'strategi_target' ? 'active' : '' }}">
+                    <i class="nav-icon fas fa-chart-line"></i>
+                    <p>Strategi dan Target</p>
                 </a>
             </li>
 

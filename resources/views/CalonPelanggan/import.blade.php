@@ -42,7 +42,6 @@
             
             let form = $(this);
             let url = form.attr('action');
-            // Karena ada upload file, kita harus pakai FormData
             let formData = new FormData(this);
             
             let btn = form.find('button[type="submit"]');
@@ -72,7 +71,6 @@
                             confirmButtonColor: '#28a745'
                         });
                         
-                        // Reload DataTables Calon Pelanggan
                         if (typeof tableCalonPelanggan !== 'undefined') {
                             tableCalonPelanggan.ajax.reload(null, false);
                         }

@@ -78,7 +78,7 @@
             
             $.ajax({
                 url: url,
-                type: "POST", // Menggunakan POST karena method spoofing @method('PUT') sudah ada di atas
+                type: "POST", 
                 data: form.serialize(),
                 success: function(response) {
                     $('.error-text').text('');

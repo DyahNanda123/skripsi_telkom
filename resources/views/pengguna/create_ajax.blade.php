@@ -56,7 +56,6 @@
 
 <script>
     $(document).ready(function() {
-        // Ketika tombol Simpan diklik
         $("#form-tambah").on('submit', function(e) {
             e.preventDefault(); // Mencegah loading halaman
             
@@ -68,11 +67,9 @@
                 type: "POST",
                 data: form.serialize(),
                 success: function(response) {
-                    // Kosongkan pesan error sebelumnya
                     $('.error-text').text('');
                     
                     if(response.status) {
-                        // Jika sukses: Tutup modal dan munculkan SweetAlert
                         $('#myModal').modal('hide');
                         Swal.fire({
                             icon: 'success',
@@ -87,7 +84,6 @@
                         // Refresh tabel otomatis
                         dataPengguna.ajax.reload();
                     } else {
-                        // Jika ada validasi gagal: Tampilkan pesan error di bawah input
                         $.each(response.msgField, function(prefix, val) {
                             $('#error-'+prefix).text(val[0]);
                         });

@@ -18,14 +18,14 @@
                         <option value="WKU">WKU</option>
                     </select>
 
-                    {{-- Filter Langganan - SESUAI ENUM DB --}}
+                    {{-- Filter Langganan --}}
                     <select class="form-control form-control-sm mr-2" id="filter_langganan" style="width: 180px; border-radius: 20px;">
                         <option value="">- Status Langganan -</option>
                         <option value="Berlangganan">Berlangganan</option>
                         <option value="Belum Berlangganan">Belum Berlangganan</option>
                     </select>
 
-                    {{-- Filter Visit - SESUAI ENUM DB --}}
+                    {{-- Filter Visit --}}
                     <select class="form-control form-control-sm" id="filter_visit" style="width: 160px; border-radius: 20px;">
                         <option value="">- Status Kunjungan -</option>
                         <option value="Sudah Visit">Sudah Visit</option>
@@ -41,12 +41,21 @@
                             <i class="fas fa-upload"></i> Export
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="{{ url('/calon_pelanggan/export_excel') }}"><i class="fas fa-file-excel text-success mr-2"></i> Excel</a>
-                            <a class="dropdown-item" href="{{ url('/calon_pelanggan/export_pdf') }}"><i class="fas fa-file-pdf text-danger mr-2"></i> PDF</a>
+                            <a class="dropdown-item" href="{{ url('/calon_pelanggan/export_excel') }}">
+                                <i class="fas fa-file-excel text-success mr-2"></i> Excel
+                            </a>
+                            <a class="dropdown-item" href="{{ url('/calon_pelanggan/export_pdf') }}" target="_blank">
+                                <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
+                            </a>
                         </div>
                     </div>
-                    <button onclick="modalAction('{{ url('/calon_pelanggan/import') }}')" class="btn btn-default btn-sm mr-2" style="border-radius: 20px;"><i class="fas fa-download"></i> Import</button>
-                    <button onclick="modalAction('{{ url('/calon_pelanggan/create_ajax') }}')" class="btn btn-danger btn-sm" style="border-radius: 20px;"><i class="fas fa-plus"></i> Add Data</button>
+                    @if(auth()->user()->role == 'admin')
+                    <button onclick="modalAction('{{ url('/calon_pelanggan/import') }}')" class="btn btn-default btn-sm mr-2" style="border-radius: 20px;">
+                        <i class="fas fa-download"></i> Import</button>
+                    <button onclick="modalAction('{{ url('/calon_pelanggan/create_ajax') }}')" class="btn btn-danger">
+                        <i class="fas fa-plus"></i> Add Calon Pelanggan
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

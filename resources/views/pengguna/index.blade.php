@@ -20,7 +20,6 @@
                 </div>
                 
                 <div class="col-md-6 text-right">
-                    {{-- <button class="btn btn-default btn-sm mr-1" style="border-radius: 20px;"><i class="fas fa-upload"></i> Export</button> --}}
                     <div class="btn-group mr-1">
                         <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="border-radius: 20px;">
                             <i class="fas fa-upload"></i> Export
@@ -29,12 +28,11 @@
                             <a class="dropdown-item" href="{{ url('/pengguna/export_excel') }}">
                                 <i class="fas fa-file-excel text-success mr-2"></i> Export Excel
                             </a>
-                            <a class="dropdown-item" href="{{ url('/pengguna/export_pdf') }}">
-                                <i class="fas fa-file-pdf text-danger mr-2"></i> Export PDF
+                            <a class="dropdown-item" href="{{ url('/pengguna/export_pdf') }}" target="_blank">
+                                <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
                             </a>
                         </div>
                     </div>
-                    {{-- <button class="btn btn-default btn-sm mr-2" style="border-radius: 20px;"><i class="fas fa-download"></i> Import</button> --}}
                     <button onclick="modalAction('{{ url('/pengguna/import') }}')" class="btn btn-default btn-sm mr-2" style="border-radius: 20px;"><i class="fas fa-download"></i> Import</button>
                     <button onclick="modalAction('{{ url('/pengguna/create_ajax') }}')" class="btn btn-danger btn-sm" style="border-radius: 20px;"><i class="fas fa-plus"></i> Add User</button>
                 </div>
@@ -64,14 +62,12 @@
 
 @push('js')
 <script>
-    // Setup token keamanan untuk AJAX Laravel
     $.ajaxSetup({
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
     var dataPengguna;
     $(document).ready(function() {
-        // Inisialisasi Datatables
         dataPengguna = $('#table_pengguna').DataTable({
             serverSide: true,
             processing: true,
@@ -95,13 +91,11 @@
             ]
         });
 
-        // Kalau filter diganti, tabel otomatis refresh tanpa loading halaman!
         $('#filter_role, #filter_status').on('change', function() {
             dataPengguna.ajax.reload();
         });
     });
 
-    // Fungsi untuk memanggil modal (Popup)
     function modalAction(url) {
         $('#myModal').load(url, function() {
             $('#myModal').modal('show');

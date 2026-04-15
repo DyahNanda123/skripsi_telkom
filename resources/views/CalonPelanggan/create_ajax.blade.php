@@ -137,22 +137,17 @@ $(document).on('submit', '#form-tambah', function(e) {
             $('.error-text').text(''); // Bersihkan pesan error lama
 
             if (response.status) {
-                // 1️⃣ Tutup modal (Cek apakah ID-nya #myModal atau #modal-master)
-                // Kita coba panggil keduanya agar pasti tertutup
                 $('#myModal').modal('hide'); 
-                $('.modal').modal('hide'); // Menutup semua modal yang terbuka
+                $('.modal').modal('hide'); 
                 $('body').removeClass('modal-open');
-                $('.modal-backdrop').remove(); // Hapus bayangan hitam modal
-
-                // 2️⃣ Reset isi form agar bersih saat dibuka lagi
+                $('.modal-backdrop').remove();
+               
                 form[0].reset();
 
-                // 3️⃣ Reload tabel agar data baru langsung muncul
                 if (typeof tableCalonPelanggan !== 'undefined') {
                     tableCalonPelanggan.ajax.reload(null, false);
                 }
 
-                // 4️⃣ Tampilkan notifikasi yang otomatis hilang dalam 1.5 detik
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil',
@@ -162,7 +157,7 @@ $(document).on('submit', '#form-tambah', function(e) {
                 });
 
             } else {
-                // Tampilkan pesan error validasi per kolom
+              
                 $.each(response.msgField, function(key, value) {
                     $('#error-' + key).text(value[0]);
                 });

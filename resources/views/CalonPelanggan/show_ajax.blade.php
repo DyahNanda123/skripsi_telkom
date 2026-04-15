@@ -13,7 +13,6 @@
         <div class="modal-body pt-0">
             <div class="form-group">
                 <label class="small font-weight-bold text-uppercase">Nama Pelanggan / Toko</label>
-                {{-- Tambahkan atribut disabled agar tidak bisa diedit --}}
                 <input type="text" class="form-control" value="{{ $CalonPelanggan->nama_pelanggan }}" disabled>
             </div>
 
@@ -42,7 +41,7 @@
                     <div class="form-group">
                         <label class="small font-weight-bold text-uppercase">Link Google Maps</label>
                         <input type="text" class="form-control" value="{{ $CalonPelanggan->link_maps }}" disabled>
-                        {{-- Jika ada link, kita kasih tombol kecil buat langsung buka maps-nya --}}
+                        {{-- disertakan link sehingga maps langsung mengarah ke link--}}
                         @if($CalonPelanggan->link_maps)
                             <a href="{{ $CalonPelanggan->link_maps }}" target="_blank" class="btn btn-sm btn-info mt-2" style="border-radius: 8px;">
                                 <i class="fas fa-map-marker-alt"></i> Buka Maps
@@ -108,12 +107,21 @@
                 <textarea class="form-control" rows="3" disabled>{{ $CalonPelanggan->alamat }}</textarea>
             </div>
         </div>
-        <div class="modal-footer border-0">
-            {{-- Tinggal tombol Tutup aja, Simpan-nya dihapus --}}
-            <button type="button" class="btn btn-danger px-4" data-dismiss="modal" style="border-radius: 8px;">Tutup</button>
-        </div>
+        <div class="modal-footer border-0 d-flex justify-content-end">
+        @if(auth()->check() && auth()->user()->role == 'sales')
+        <form action="{{ url('/kunjungan/mulai/' . $CalonPelanggan->id) }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-success px-4 me-2" style="border-radius: 8px;">
+                <i class="fas fa-clipboard-check"></i> Lakukan Kunjungan
+            </button>
+        </form>
+        @endif
+        <button type="button" 
+                class="btn btn-danger px-4" 
+                data-dismiss="modal" 
+                style="border-radius: 8px;">
+            Tutup
+        </button>
+        </div> 
     </div>
-     {{-- <div class="modal-footer border-0 justify-content-center pt-0">
-            <button type="button" class="btn btn-danger px-4" data-dismiss="modal" style="border-radius: 25px; min-width: 130px;">Tutup</button>
-        </div> --}}
 </div>

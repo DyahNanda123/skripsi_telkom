@@ -34,17 +34,17 @@ class CalonPelangganController extends Controller
         'link_maps', 'status_langganan', 'status_visit', 'wilayah', 'sto'
     ]);
 
-    // 2. Filter STO (Tambahkan ini!)
+    // 2. Filter STO 
     if ($request->has('sto') && $request->sto != '') {
         $pelanggans->where('sto', $request->sto);
     }
 
-    // 3. Filter Status Langganan (Tambahkan ini!)
+    // 3. Filter Status Langganan
     if ($request->has('status_langganan') && $request->status_langganan != '') {
         $pelanggans->where('status_langganan', $request->status_langganan);
     }
 
-    // 4. Filter Status Visit (Sesuaikan namanya dengan d.status_visit di JS)
+    // 4. Filter Status Visit 
     if ($request->has('status_visit') && $request->status_visit != '') {
         $pelanggans->where('status_visit', $request->status_visit);
     }
@@ -57,6 +57,13 @@ class CalonPelangganController extends Controller
             }
             return '-';
         })
+        ->editColumn('status_langganan', function ($pelanggan) {
+            if ($pelanggan->status_langganan == 'Berlangganan') {
+                return '<span class="badge badge-success px-3 py-1" style="border-radius: 20px;"><i class="fas fa-check-circle mr-1"></i> Berlangganan</span>';
+            }
+            return '<span class="badge badge-warning px-3 py-1" style="border-radius: 20px;">Belum Berlangganan</span>';
+        })
+
         ->addColumn('status_visit_label', function ($pelanggan) {
             if ($pelanggan->status_visit == 'Sudah Visit') {
                 return '<span class="badge badge-success px-3 py-1" style="border-radius: 20px;">Sudah Visit</span>';
@@ -66,12 +73,16 @@ class CalonPelangganController extends Controller
             return '<span class="badge badge-warning px-3 py-1" style="border-radius: 20px;">Belum Visit</span>';
         })
         ->addColumn('aksi', function ($pelanggan) {
-            return '
-                <button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button>
-                <button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button>
-                <button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button>';
-        })
-        ->rawColumns(['link_maps', 'status_visit_label', 'aksi'])
+        $btn = '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button> ';
+
+        if (auth()->user()->role == 'admin') {
+            $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button> ';
+            $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button>';
+        }
+
+        return $btn;
+})
+        ->rawColumns(['link_maps', 'status_langganan', 'status_visit_label', 'aksi'])
         ->make(true);
 }
 
@@ -81,7 +92,6 @@ class CalonPelangganController extends Controller
         return view('CalonPelanggan.create_ajax');
     }
 
-    // Anda bisa menambahkan method store_ajax, edit_ajax, update_ajax di sini
     public function store_ajax(Request $request)
 {
     $rules = [
@@ -105,7 +115,6 @@ class CalonPelangganController extends Controller
         ]);
     }
 
-    // Simpan hanya data yang sudah tervalidasi
     CalonPelanggan::create($validator->validated());
 
     return response()->json([
@@ -114,12 +123,11 @@ class CalonPelangganController extends Controller
     ]);
 }
 
-     // 5. Menampilkan Form Edit Pengguna (Modal AJAX)
+     // 4. Menampilkan Form Edit Pengguna 
     public function edit_ajax(string $id)
     {
         $CalonPelanggan = CalonPelanggan::find($id);
 
-        // Kalau datanya nggak ada di database
         if (!$CalonPelanggan) {
             return response()->json(['status' => false, 'message' => 'Data tidak ditemukan']);
         }
@@ -127,12 +135,11 @@ class CalonPelangganController extends Controller
         return view('CalonPelanggan.edit_ajax', ['CalonPelanggan' => $CalonPelanggan]);
     }
 
-    // 6. Menyimpan Perubahan Data (Modal AJAX)
+    // 5. Menyimpan Perubahan Data 
     public function update_ajax(Request $request, $id)
     {
         if ($request->ajax() || $request->wantsJson()) {
             
-            // Aturan Validasi
             $rules = [
                 'nama_pelanggan'   => 'required|string|max:100',
                 'alamat'           => 'required|string',
@@ -165,7 +172,6 @@ class CalonPelangganController extends Controller
                 $CalonPelanggan->wilayah = $request->wilayah;
                 $CalonPelanggan->sto = $request->sto;
 
-
                 $CalonPelanggan->save();
 
                 return response()->json([
@@ -179,10 +185,9 @@ class CalonPelangganController extends Controller
 
     public function show_ajax(string $id)
     {
-        // Cari data pengguna berdasarkan ID
+
         $CalonPelanggan = CalonPelanggan::find($id);
 
-        // Kalau datanya nggak ada di database, munculkan error
         if (!$CalonPelanggan) {
             return response()->json([
                 'status' => false, 
@@ -190,11 +195,10 @@ class CalonPelangganController extends Controller
             ]);
         }
 
-        // Tampilkan halaman view detail
         return view('CalonPelanggan.show_ajax', ['CalonPelanggan' => $CalonPelanggan]);
     }
     
-    // 8. Menampilkan Konfirmasi Hapus (Modal AJAX)
+    // 7. Menampilkan Konfirmasi Hapus
     public function delete_ajax(string $id)
     {
         $CalonPelanggan = CalonPelanggan::find($id);
@@ -206,10 +210,9 @@ class CalonPelangganController extends Controller
         return view('CalonPelanggan.delete_ajax', ['CalonPelanggan' => $CalonPelanggan]);
     }
 
-    // 9. Memproses Penghapusan Data (AJAX)
+    // 8. Memproses Penghapusan Data 
     public function destroy_ajax(Request $request, string $id)
     {
-        // Cek apakah request dari AJAX
         if ($request->ajax() || $request->wantsJson()) {
             $CalonPelanggan = CalonPelanggan::find($id);
             
@@ -231,19 +234,17 @@ class CalonPelangganController extends Controller
         return redirect('/');
     }
 
-    // 10. Menampilkan Form Import Excel (Modal AJAX)
+    // 9. Menampilkan Form Import Excel 
     public function import()
     {
-        // Pastikan nama folder huruf besarnya sesuai: 'CalonPelanggan'
         return view('CalonPelanggan.import');
     }
 
-    // 11. Memproses Data dari Excel (AJAX)
+    // 10. Memproses Data dari Excel 
     public function import_ajax(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
             $rules = [
-                // Validasi file harus berakhiran .xlsx dan maksimal 1MB
                 'file_calon_pelanggan' => ['required', 'mimes:xlsx', 'max:1024']
             ];
 
@@ -263,13 +264,12 @@ class CalonPelangganController extends Controller
             $spreadsheet = $reader->load($file->getRealPath());
             $sheet = $spreadsheet->getActiveSheet();
             
-            // Ambil semua isi Excel menjadi array
             $data = $sheet->toArray(null, false, true, true);
             $insert = [];
 
-            if (count($data) > 1) { // Jika ada isinya (lebih dari 1 baris)
+            if (count($data) > 1) { 
                 foreach ($data as $baris => $value) {
-                    if ($baris > 1) { // Baris 1 biasanya judul kolom (Header), jadi dilewati
+                    if ($baris > 1) {
                         $insert[] = [
                             'nama_pelanggan'   => $value['A'], // Kolom A di Excel
                             'alamat'           => $value['B'], // Kolom B
@@ -286,8 +286,6 @@ class CalonPelangganController extends Controller
                 }
 
                 if (count($insert) > 0) {
-                    // Masukkan ke database sekaligus banyak
-                    // insertOrIgnore dipakai supaya kalau ada error minor, proses insert gak berhenti total
                     CalonPelanggan::insertOrIgnore($insert);
                 }
 
@@ -306,12 +304,9 @@ class CalonPelangganController extends Controller
         return redirect('/');
     }
 
-    // ==========================================
-    // 12. Meng-export Data ke Excel
-    // ==========================================
+    // 11. Meng-export Data ke Excel
     public function export_excel()
     {
-        // Ambil data Calon Pelanggan dari database
         $pelanggans = CalonPelanggan::select('nama_pelanggan', 'alamat', 'wilayah', 'sto', 'jenis_pelanggan', 'link_maps', 'status_langganan', 'status_visit')
             ->orderBy('nama_pelanggan') 
             ->get();
@@ -319,7 +314,6 @@ class CalonPelangganController extends Controller
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Bikin Judul Kolom (Header) - Sesuai urutan tabel index
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Nama');
         $sheet->setCellValue('C1', 'Alamat');
@@ -330,10 +324,8 @@ class CalonPelangganController extends Controller
         $sheet->setCellValue('H1', 'Status Langganan');
         $sheet->setCellValue('I1', 'Status Kunjungan');
 
-        // Tebalkan huruf (Bold) untuk baris pertama
         $sheet->getStyle('A1:I1')->getFont()->setBold(true);
 
-        // Isi datanya secara otomatis
         $no = 1;
         $baris = 2; 
         foreach ($pelanggans as $pelanggan) {
@@ -351,7 +343,6 @@ class CalonPelangganController extends Controller
             $no++;
         }
 
-        // Rapikan ukuran lebar kolom otomatis (Dari A sampai I)
         foreach (range('A', 'I') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
@@ -361,7 +352,6 @@ class CalonPelangganController extends Controller
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
         $filename = 'Data_CalonPelanggan_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Setting header browser agar langsung mendownload file Excel
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
@@ -375,20 +365,15 @@ class CalonPelangganController extends Controller
         exit;
     }
 
-    // ==========================================
-    // 13. Meng-export Data ke PDF
-    // ==========================================
+    // 12. Meng-export Data ke PDF
     public function export_pdf()
     {
-        // Ambil data Calon Pelanggan
         $pelanggans = CalonPelanggan::select('nama_pelanggan', 'alamat', 'wilayah', 'sto', 'jenis_pelanggan', 'link_maps', 'status_langganan', 'status_visit')
             ->orderBy('nama_pelanggan')
             ->get();
 
-        // Lempar data ke view export_pdf.blade.php
         $pdf = Pdf::loadView('CalonPelanggan.export_pdf', ['pelanggans' => $pelanggans]);
         
-        // UBAH JADI LANDSCAPE: Biar kertasnya mendatar karena kolomnya banyak
         $pdf->setPaper('a4', 'landscape'); 
         $pdf->setOption("isRemoteEnabled", true); 
 

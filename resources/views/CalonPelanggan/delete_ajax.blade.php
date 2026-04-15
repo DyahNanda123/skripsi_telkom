@@ -5,7 +5,6 @@
             @method('DELETE')
             
             <div class="modal-body text-center pt-4 pb-0">
-                {{-- Icon diubah menjadi merah (text-danger) --}}
                 <i class="fas fa-exclamation-circle text-danger" style="font-size: 70px; margin-bottom: 20px;"></i>
                 
                 <h4 style="font-weight: 600; color: #333;">Konfirmasi Hapus</h4>
@@ -32,8 +31,7 @@
             let url = form.attr('action');
             let btn = form.find('button[type="submit"]');
             let btnAsli = btn.html();
-            
-            // Ubah tombol jadi efek loading biar kelihatan kalau sistem sedang kerja
+           
             btn.html('<i class="fas fa-spinner fa-spin"></i> Loading...').prop('disabled', true);
             
             $.ajax({
@@ -41,10 +39,9 @@
                 type: "POST",
                 data: form.serialize(),
                 success: function(response) {
-                    btn.html(btnAsli).prop('disabled', false); // Kembalikan bentuk tombol
+                    btn.html(btnAsli).prop('disabled', false); 
                     
                     if(response.status) {
-                        // Tutup modal dan bersihkan bayangan hitam
                         $('#myModal').modal('hide');
                         $('.modal-backdrop').remove(); 
                         $('body').removeClass('modal-open');
@@ -58,8 +55,7 @@
                             confirmButtonColor: '#28a745',
                             customClass: { title: 'font-weight-bold' }
                         });
-                        
-                        // Reload tabel calon pelanggan otomatis
+                    
                         if (typeof tableCalonPelanggan !== 'undefined') {
                             tableCalonPelanggan.ajax.reload(null, false);
                         }

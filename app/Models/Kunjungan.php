@@ -10,6 +10,7 @@ class Kunjungan extends Model
     use HasFactory;
 
     protected $table = 'kunjungan';
+
     protected $fillable = [
         'user_id',
         'calon_pelanggan_id',
@@ -23,6 +24,7 @@ class Kunjungan extends Model
         'provider_eksisting',
         'tagihan_bulanan',
     ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

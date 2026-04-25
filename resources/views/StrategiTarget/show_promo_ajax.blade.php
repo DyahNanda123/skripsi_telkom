@@ -24,11 +24,22 @@
                                 <h5 class="font-weight-bold text-dark">{{ $promo->judul }}</h5>
                             </div>
                             
-                            <div class="mb-4">
-                                <label class="small font-weight-bold text-muted mb-1 d-block text-uppercase">Kategori</label>
-                                <span class="badge badge-danger px-3 py-1 text-capitalize" style="font-size: 13px; border-radius: 6px;">
-                                    {{ $promo->kategori ?? '-' }}
-                                </span>
+                            <div class="row mb-4">
+                                <div class="col-6">
+                                    <label class="small font-weight-bold text-muted mb-1 d-block text-uppercase">Kategori</label>
+                                    <span class="badge badge-danger px-3 py-1 text-capitalize" style="font-size: 13px; border-radius: 6px;">
+                                        {{ $promo->kategori ?? '-' }}
+                                    </span>
+                                </div>
+                                
+                                {{-- TAMBAHAN: TANGGAL KADALUWARSA DI SINI --}}
+                                <div class="col-6">
+                                    <label class="small font-weight-bold text-muted mb-1 d-block text-uppercase">Berlaku Sampai</label>
+                                    <div class="text-danger font-weight-bold" style="font-size: 15px;">
+                                        <i class="fas fa-calendar-times mr-1"></i>
+                                        {{ $promo->tanggal_kadaluwarsa ? \Carbon\Carbon::parse($promo->tanggal_kadaluwarsa)->format('d M Y') : 'Selamanya' }}
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-4">
@@ -61,17 +72,17 @@
 
                             <div class="w-100 text-center d-flex flex-column justify-content-center align-items-center p-3" style="min-height: 250px; background-color: #fafafa; border-radius: 10px; border: 2px dashed #ddd;">
                                 
-            @if($isImage)
-                <img src="{{ asset($promo->file_path) }}" alt="Preview Promo" class="img-fluid shadow-sm" style="max-height: 220px; border-radius: 8px; object-fit: contain;">
-            @else
-                <i class="fas fa-file-pdf text-danger mb-3" style="font-size: 60px;"></i>
-                <h6 class="font-weight-bold text-muted px-2 text-truncate" style="max-width: 100%;">{{ $promo->judul }}.{{ $ext }}</h6>
-            @endif
-                                        
-        </div>
-        <a href="{{ asset($promo->file_path) }}" target="_blank" class="btn btn-danger btn-block font-weight-bold text-white mt-3" style="border-radius: 8px; padding: 10px;">
-            <i class="fas fa-external-link-alt mr-1"></i> Buka File Full
-        </a>
+                                @if($isImage)
+                                    <img src="{{ asset($promo->file_path) }}" alt="Preview Promo" class="img-fluid shadow-sm" style="max-height: 220px; border-radius: 8px; object-fit: contain;">
+                                @else
+                                    <i class="fas fa-file-pdf text-danger mb-3" style="font-size: 60px;"></i>
+                                    <h6 class="font-weight-bold text-muted px-2 text-truncate" style="max-width: 100%;">{{ $promo->judul }}.{{ $ext }}</h6>
+                                @endif
+                                                
+                            </div>
+                            <a href="{{ asset($promo->file_path) }}" target="_blank" class="btn btn-danger btn-block font-weight-bold text-white mt-3" style="border-radius: 8px; padding: 10px;">
+                                <i class="fas fa-external-link-alt mr-1"></i> Buka File Full
+                            </a>
                             
                             <button type="button" class="btn btn-light btn-block font-weight-bold mt-2" data-dismiss="modal" style="border-radius: 8px; padding: 10px; color: #555; border: 1px solid #ddd;">
                                 Tutup Panel

@@ -28,23 +28,33 @@ class CalonPelangganController extends Controller
     // 2. Mengambil Data untuk Yajra DataTables (AJAX)
     public function list(Request $request)
 {
-    // 1. Ambil data dasar
+    // 1. Ambil data dasar (Pastikan 'created_at' masuk di select)
     $pelanggans = CalonPelanggan::select([
         'id', 'nama_pelanggan', 'alamat', 'jenis_pelanggan', 
-        'link_maps', 'status_langganan', 'status_visit', 'wilayah', 'sto'
+        'link_maps', 'status_langganan', 'status_visit', 'wilayah', 'sto', 'created_at'
     ]);
 
-    // 2. Filter STO 
+    // 2. LOGIKA SORTING YANG LEBIH SAKTI 🔥
+    // Cek urutan berdasarkan kolom ke-berapa dari request DataTables
+    $orderColumn = $request->input('order.0.column');
+
+    // Kalau baru buka halaman (null) ATAU default dari DataTables (kolom 0 / 'No')
+    if ($orderColumn === null || $orderColumn == '0') {
+        // Paksa data terbaru nangkring di atas!
+        $pelanggans->orderBy('created_at', 'desc'); 
+    }
+
+    // 3. Filter STO 
     if ($request->has('sto') && $request->sto != '') {
         $pelanggans->where('sto', $request->sto);
     }
 
-    // 3. Filter Status Langganan
+    // 4. Filter Status Langganan
     if ($request->has('status_langganan') && $request->status_langganan != '') {
         $pelanggans->where('status_langganan', $request->status_langganan);
     }
 
-    // 4. Filter Status Visit 
+    // 5. Filter Status Visit 
     if ($request->has('status_visit') && $request->status_visit != '') {
         $pelanggans->where('status_visit', $request->status_visit);
     }
@@ -63,7 +73,6 @@ class CalonPelangganController extends Controller
             }
             return '<span class="badge badge-warning px-3 py-1" style="border-radius: 20px;">Belum Berlangganan</span>';
         })
-
         ->addColumn('status_visit_label', function ($pelanggan) {
             if ($pelanggan->status_visit == 'Sudah Visit') {
                 return '<span class="badge badge-success px-3 py-1" style="border-radius: 20px;">Sudah Visit</span>';
@@ -73,15 +82,16 @@ class CalonPelangganController extends Controller
             return '<span class="badge badge-warning px-3 py-1" style="border-radius: 20px;">Belum Visit</span>';
         })
         ->addColumn('aksi', function ($pelanggan) {
-        $btn = '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button> ';
+            $btn = '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button> ';
 
-        if (auth()->user()->role == 'admin') {
-            $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button> ';
-            $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button>';
-        }
+            // Hak akses: cuma admin yang bisa edit & hapus
+            if (auth()->user()->role == 'admin') {
+                $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button> ';
+                $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button>';
+            }
 
-        return $btn;
-})
+            return $btn;
+        })
         ->rawColumns(['link_maps', 'status_langganan', 'status_visit_label', 'aksi'])
         ->make(true);
 }

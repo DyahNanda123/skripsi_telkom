@@ -17,6 +17,7 @@ class StrategiPromosi extends Model
         'user_id',
         'deskripsi',
         'kategori',
+        'tanggal_kadaluwarsa'
     ];
 
     // fk user id

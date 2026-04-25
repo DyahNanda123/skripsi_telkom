@@ -12,17 +12,21 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Can;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 
 class StrategiTargetController extends Controller
 {
-    public function index(Request $request) 
+   public function index(Request $request) 
     {
         $sales = User::where('role', 'sales')->get();
 
+        // Default ke bulan & tahun sekarang jika tidak ada filter
+        $bulanFilter = $request->get('bulan', date('n'));
+        $tahunFilter = $request->get('tahun', date('Y'));
+
         $queryTarget = TargetSales::with('user');
         
-        // menentukan role yg login, tampilan menyesuaikan role
         if (auth()->user()->role == 'sales') {
             $queryTarget->where('user_id', auth()->id());
         } else {
@@ -31,29 +35,36 @@ class StrategiTargetController extends Controller
             }
         }
         
-        if ($request->has('bulan') && $request->bulan != '') {
-            $queryTarget->where('bulan', $request->bulan);
-        }
+        if ($bulanFilter != '') { $queryTarget->where('bulan', $bulanFilter); }
+        if ($tahunFilter != '') { $queryTarget->where('tahun', $tahunFilter); }
         
         $targets = $queryTarget->get();
-        $promosis = StrategiPromosi::with('user')->latest()->get();
+
+        $promosis = StrategiPromosi::with('user')
+            ->where(function($query) {
+                $query->whereDate('tanggal_kadaluwarsa', '>=', now()->toDateString())
+                      ->orWhereNull('tanggal_kadaluwarsa');
+            })
+            ->latest()
+            ->get();
+        // ----------------------------------------------------------
+
         $activeMenu = 'strategi_target'; 
         $breadcrumb = (object) [
             'title' => 'Strategi dan Target Sales',
             'list'  => ['Home', 'Strategi & Target']
         ];
         
-        return view('StrategiTarget.index', compact('sales', 'targets', 'promosis', 'activeMenu', 'breadcrumb'));
+        return view('StrategiTarget.index', compact(
+            'sales', 'targets', 'promosis', 'activeMenu', 'breadcrumb',
+            'bulanFilter', 'tahunFilter'
+        ));
     }
 
-    public function show_promo_ajax($id)
+   public function show_promo_ajax($id)
     {
         $promo = StrategiPromosi::with('user')->find($id);
-        
-        if (!$promo) {
-            return response()->json(['status' => false, 'message' => 'Data materi tidak ditemukan']);
-        }
-
+        if (!$promo) return response()->json(['status' => false, 'message' => 'Data tidak ditemukan']);
         return view('StrategiTarget.show_promo_ajax', compact('promo'));
     }
 
@@ -123,103 +134,76 @@ class StrategiTargetController extends Controller
 
     public function store_ajax(Request $request)
     {
-        $isTarget = $request->filled('jumlah_target');
-        $isPromo = $request->hasFile('file_promo') || $request->filled('judul');
+        $isTargetMassal = $request->has('periode');
+        $isPromo = $request->has('judul');
 
-        if (!$isTarget && !$isPromo) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Silakan isi form Target atau form Materi Promosi terlebih dahulu!',
-                'msgField' => []
-            ]);
+        if (!$isTargetMassal && !$isPromo) {
+            return response()->json(['status' => false, 'message' => 'Silakan isi form!']);
         }
 
-        if ($isTarget) {
+        // --- LOGIKA TARGET MASSAL ---
+        if ($isTargetMassal) {
             $validatorTarget = Validator::make($request->all(), [
-                'user_id' => 'required',
                 'periode' => 'required',
-                'jumlah_target' => 'required|numeric|min:1',
+                'target'  => 'required|array', 
             ]);
 
-            if ($validatorTarget->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validasi Target Gagal',
-                    'msgField' => $validatorTarget->errors()
-                ]);
-            }
+            if ($validatorTarget->fails()) return response()->json(['status' => false, 'msgField' => $validatorTarget->errors()]);
 
             $periode = explode('-', $request->periode);
             $tahun = $periode[0];
             $bulan = (string) ltrim($periode[1], '0'); 
 
-            TargetSales::updateOrCreate(
-                [
-                    'user_id' => $request->user_id,
-                    'bulan' => $bulan,
-                    'tahun' => $tahun
-                ],
-                [
-                    'jumlah_target' => $request->jumlah_target
-                ]
-            );
+            DB::beginTransaction();
+            try {
+                foreach ($request->input('target', []) as $user_id => $jumlah_target) {
+                    if ($jumlah_target === null || $jumlah_target === '') continue;
 
-            // menyesuaikan notifikasi
-            $salesPenerima = User::find($request->user_id);
-            if ($salesPenerima) {
-                // Notif untuk Salesnya
-                Notifikasi::create([
-                    'user_id' => $salesPenerima->id,
-                    'judul'   => 'Target Baru',
-                    'pesan'   => 'Pimpinan menambahkan target baru untuk Anda.',
-                    'url'     => '/', // Arahkan ke Dashboard
-                    'is_read' => 0
-                ]);
+                    TargetSales::updateOrCreate(
+                        ['user_id' => $user_id, 'bulan' => $bulan, 'tahun' => $tahun],
+                        ['jumlah_target' => $jumlah_target]
+                    );
 
-                // Notif untuk semua Admin
-                $admins = User::where('role', 'admin')->get();
-                foreach ($admins as $admin) {
                     Notifikasi::create([
-                        'user_id' => $admin->id,
-                        'judul'   => 'Target Baru Sales',
-                        'pesan'   => 'Pimpinan menambahkan target baru untuk Sales ' . $salesPenerima->nama_lengkap,
-                        'url'     => '/strategi-target',
+                        'user_id' => $user_id,
+                        'judul'   => 'Target Baru',
+                        'pesan'   => 'Pimpinan menetapkan target baru Anda sebesar ' . $jumlah_target . ' PS.',
+                        'url'     => '/', 
                         'is_read' => 0
                     ]);
                 }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json(['status' => false, 'message' => 'Gagal: ' . $e->getMessage()]);
             }
-        
         }
-        // menyimpan materi promosi
+        
+        // --- 🟢 PERBAIKAN: Simpan Strategi & Tanggal Kadaluwarsa ---
         if ($isPromo) {
             $validatorPromo = Validator::make($request->all(), [
                 'judul' => 'required',
-                'deskripsi' => 'nullable',
                 'kategori' => 'required', 
+                'tanggal_kadaluwarsa' => 'required|date',
                 'file_promo' => 'required|mimes:jpg,jpeg,png,pdf|max:5120',
             ]);
 
-            if ($validatorPromo->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validasi Materi Promosi Gagal',
-                    'msgField' => $validatorPromo->errors()
-                ]);
-            }
+            if ($validatorPromo->fails()) return response()->json(['status' => false, 'msgField' => $validatorPromo->errors()]);
 
-            // Upload File
             $file = $request->file('file_promo');
             $nama_file = time() . "_" . $file->getClientOriginalName();
             $file->move(public_path('uploads/promosi'), $nama_file);
 
-            $promoBaru = StrategiPromosi::create([
+            StrategiPromosi::create([
                 'judul' => $request->judul,
                 'deskripsi' => $request->deskripsi,
                 'kategori' => $request->kategori, 
+                'tanggal_kadaluwarsa' => $request->tanggal_kadaluwarsa, // SIMPAN KE DB
                 'file_path' => 'uploads/promosi/' . $nama_file,
-                'user_id' => auth()->id() // Diambil dari pimpinan yang login
+                'user_id' => auth()->id() 
             ]);
 
+            // Notifikasi (Sama seperti sebelumnya)
             $usersToNotify = User::whereIn('role', ['admin', 'sales'])->get();
             foreach ($usersToNotify as $usr) {
                 Notifikasi::create([
@@ -232,10 +216,7 @@ class StrategiTargetController extends Controller
             }
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Data berhasil disimpan dengan sukses!'
-        ]);
+        return response()->json(['status' => true, 'message' => 'Data berhasil disimpan!']);
     }
 
     public function delete_target_ajax($id)
@@ -245,87 +226,57 @@ class StrategiTargetController extends Controller
             $target->delete();
             return response()->json(['status' => true, 'message' => 'Target sales berhasil dihapus!']);
         }
-        return response()->json(['status' => false, 'message' => 'Data target tidak ditemukan!']);
+        return response()->json(['status' => false, 'message' => 'Data tidak ditemukan!']);
     }
 
     public function delete_promo_ajax($id)
     {
         $promo = StrategiPromosi::find($id);
         if ($promo) {
-            if (file_exists(public_path($promo->file_path))) {
-                unlink(public_path($promo->file_path));
-            }
+            if (file_exists(public_path($promo->file_path))) { unlink(public_path($promo->file_path)); }
             $promo->delete();
             return response()->json(['status' => true, 'message' => 'Materi promosi berhasil dihapus!']);
         }
-        return response()->json(['status' => false, 'message' => 'Data promosi tidak ditemukan!']);
+        return response()->json(['status' => false, 'message' => 'Data tidak ditemukan!']);
     }
 
     public function edit_promo_ajax($id)
     {
         $promo = StrategiPromosi::find($id);
-        if (!$promo) {
-            return '<div class="modal-body text-center">Data tidak ditemukan!</div>';
-        }
+        if (!$promo) return '<div class="modal-body text-center">Data tidak ditemukan!</div>';
         return view('StrategiTarget.edit_promo_ajax', compact('promo'));
     }
 
     public function update_promo_ajax(Request $request, $id)
     {
         $promo = StrategiPromosi::find($id);
-        if (!$promo) {
-            return response()->json(['status' => false, 'message' => 'Data tidak ditemukan!']);
-        }
+        if (!$promo) return response()->json(['status' => false, 'message' => 'Data tidak ditemukan!']);
 
         $validator = Validator::make($request->all(), [
             'judul' => 'required',
-            'deskripsi' => 'nullable',
             'kategori' => 'required',
+            'tanggal_kadaluwarsa' => 'required|date',
             'file_promo' => 'nullable|mimes:jpg,jpeg,png,pdf|max:5120', 
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validasi gagal',
-                'msgField' => $validator->errors()
-            ]);
-        }
+        if ($validator->fails()) return response()->json(['status' => false, 'msgField' => $validator->errors()]);
 
         if ($request->hasFile('file_promo')) {
-            if (file_exists(public_path($promo->file_path))) {
-                unlink(public_path($promo->file_path));
-            }
-
+            if (file_exists(public_path($promo->file_path))) { unlink(public_path($promo->file_path)); }
             $file = $request->file('file_promo');
             $nama_file = time() . "_" . $file->getClientOriginalName();
             $file->move(public_path('uploads/promosi'), $nama_file);
-            
             $promo->file_path = 'uploads/promosi/' . $nama_file;
         }
 
+        // --- 🟢 PERBAIKAN: Update Data & Tanggal Kadaluwarsa ---
         $promo->judul = $request->judul;
         $promo->deskripsi = $request->deskripsi;
         $promo->kategori = $request->kategori;
+        $promo->tanggal_kadaluwarsa = $request->tanggal_kadaluwarsa; // UPDATE KE DB
         $promo->save(); 
 
-        // notifikasi edit promosi
-        $usersToNotify = User::whereIn('role', ['admin', 'sales'])->get();
-        foreach ($usersToNotify as $usr) {
-            Notifikasi::create([
-                'user_id' => $usr->id,
-                'judul'   => 'Pembaruan Strategi',
-                'pesan'   => 'Pimpinan mengubah strategi promosi: ' . $promo->judul,
-                'url'     => '/strategi-target', 
-                'is_read' => 0
-            ]);
-        }
-        // --------------------------------------------------
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Materi Promosi berhasil diperbarui!'
-        ]);
+        return response()->json(['status' => true, 'message' => 'Materi Promosi berhasil diperbarui!']);
     }
 
     public function edit_target_ajax($id)

@@ -41,6 +41,13 @@
                                     </select>
                                     <small class="error-text kategori-error text-danger"></small>
                                 </div>
+                                <div class="form-group">
+                                <label class="font-weight-bold text-dark small">TANGGAL KADALUWARSA</label>
+                                <input type="date" class="form-control" name="tanggal_kadaluwarsa" 
+                                    value="{{ $promo->tanggal_kadaluwarsa }}" required style="border-radius: 8px;">
+                                <small class="text-muted" style="font-size: 11px;">Ubah tanggal jika masa berlaku promo diperpanjang.</small>
+                                <small id="error-tanggal_kadaluwarsa" class="error-text form-text text-danger"></small>
+                            </div>
                             </div>
                             
                             <div class="col-md-5 pl-4 d-flex flex-column justify-content-center">

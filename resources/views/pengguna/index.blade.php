@@ -71,7 +71,7 @@
         dataPengguna = $('#table_pengguna').DataTable({
             serverSide: true,
             processing: true,
-            ordering: false,
+            ordering: true,
             ajax: {
                 url: "{{ url('pengguna/list') }}",
                 type: "POST",

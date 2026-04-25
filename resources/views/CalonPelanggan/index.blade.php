@@ -95,7 +95,7 @@
         tableCalonPelanggan = $('#table_calon_pelanggan').DataTable({
             serverSide: true,
             processing: true,
-            ordering:false,
+            ordering:[],
             ajax: {
                 url: "{{ url('calon_pelanggan/list') }}",
                 type: "POST",

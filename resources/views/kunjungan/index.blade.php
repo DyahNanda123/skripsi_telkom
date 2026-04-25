@@ -23,10 +23,13 @@
                         <option value="Follow Up">Follow Up</option>
                     </select>
                     <select class="form-control form-control-sm" id="filter_tahun" style="width: 150px; border-radius: 20px;">
-                        <option value="">- Semua Tahun -</option>
+                        {{-- <option value="">- Semua Tahun -</option> --}}
                         @php $tahunSekarang = date('Y'); @endphp
                         @for($t = $tahunSekarang; $t >= 2024; $t--)
-                            <option value="{{ $t }}">{{ $t }}</option>
+                            {{-- Tambahkan kondisi selected jika $t sama dengan tahun sekarang --}}
+                            <option value="{{ $t }}" {{ $t == $tahunSekarang ? 'selected' : '' }}>
+                                {{ $t }}
+                            </option>
                         @endfor
                     </select>
                 </div>
@@ -106,7 +109,8 @@
         dataKunjungan = $('#table_kunjungan').DataTable({
             serverSide: true,
             processing: true,
-            ordering: false,
+            ordering: true, // mengatur sorting ke terbaru
+            order: [[3, 'desc']],
             ajax: {
                 url: "{{ url('kunjungan/list') }}",
                 type: "POST",

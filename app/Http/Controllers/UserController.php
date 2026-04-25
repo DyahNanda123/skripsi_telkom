@@ -26,7 +26,9 @@ class UserController extends Controller
 
     public function list(Request $request)
     {
-        $users = User::select('id', 'nama_lengkap', 'nip', 'wilayah_kerja', 'status_aktif', 'role');
+        $users = User::select('id', 'nama_lengkap', 'nip', 'wilayah_kerja', 'status_aktif', 'role')
+        ->orderBy('status_aktif', 'desc') // Memaksa Aktif (1) di atas, dan Non-aktif (0) di bawah
+        ->orderBy('nama_lengkap', 'asc');
 
         if ($request->role) {
             $users->where('role', $request->role);
@@ -48,12 +50,22 @@ class UserController extends Controller
             ->editColumn('role', function ($user) {
                 return ucfirst($user->role); 
             })
-
             ->addColumn('aksi', function ($user) {
-                $btn = '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button> ';
-                $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button> ';
-                $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button>';
-                return $btn;
+                if ($user->status_aktif == 1) {
+                    // Jika AKTIF: Semua tombol menyala dan berfungsi normal
+                    $btn = '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/edit_ajax').'\')" class="btn btn-sm text-primary" title="Edit"><i class="fas fa-edit"></i></button> ';
+                    $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/delete_ajax').'\')" class="btn btn-sm text-danger" title="Nonaktifkan User"><i class="fas fa-power-off"></i></button> ';
+                    $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/show_ajax').'\')" class="btn btn-sm text-dark" title="Detail"><i class="fas fa-eye"></i></button>';
+                    
+                    return $btn;
+                } else {
+                    // Jika NON-AKTIF: Semua tombol mati (abu-abu, kursor silang, tidak bisa diklik)
+                    $btn = '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-edit"></i></button> ';
+                    $btn .= '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-power-off"></i></button> ';
+                    $btn .= '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-eye"></i></button>';
+                    
+                    return $btn;
+                }
             })
             
             ->rawColumns(['status', 'aksi']) 
@@ -194,36 +206,69 @@ class UserController extends Controller
         return view('pengguna.delete_ajax', ['user' => $user]);
     }
 
-    public function destroy_ajax(Request $request, string $id)
+//     public function destroy_ajax(Request $request, string $id)
+// {
+//     if ($request->ajax() || $request->wantsJson()) {
+//         $user = User::find($id);
+        
+//         if ($user) {
+            
+//             if ($user->role == 'admin') {
+//                 return response()->json([
+//                     'status' => false,
+//                     'message' => 'Gagal! Akun dengan role Admin tidak boleh dihapus demi keamanan sistem.'
+//                 ]);
+//             }
+//             if ($user->foto_profil && file_exists(storage_path('app/public/' . $user->foto_profil))) {
+//                 unlink(storage_path('app/public/' . $user->foto_profil));
+//             }
+
+//             $user->delete(); // Hapus datanya dari database
+            
+//             return response()->json([
+//                 'status' => true,
+//                 'message' => 'Data pengguna berhasil dihapus!'
+//             ]);
+//         } else {
+//             return response()->json([
+//                 'status' => false,
+//                 'message' => 'Data tidak ditemukan'
+//             ]);
+//         }
+//     }
+//     return redirect('/');
+// }
+
+public function destroy_ajax(Request $request, string $id)
 {
     if ($request->ajax() || $request->wantsJson()) {
         $user = User::find($id);
         
-        if ($user) {
-            
-            if ($user->role == 'admin') {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Gagal! Akun dengan role Admin tidak boleh dihapus demi keamanan sistem.'
-                ]);
-            }
-            if ($user->foto_profil && file_exists(storage_path('app/public/' . $user->foto_profil))) {
-                unlink(storage_path('app/public/' . $user->foto_profil));
-            }
-
-            $user->delete(); // Hapus datanya dari database
-            
-            return response()->json([
-                'status' => true,
-                'message' => 'Data pengguna berhasil dihapus!'
-            ]);
-        } else {
+        if (!$user) {
             return response()->json([
                 'status' => false,
                 'message' => 'Data tidak ditemukan'
             ]);
         }
+
+        // Proteksi admin
+        if ($user->role == 'admin') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Akun Admin tidak boleh dinonaktifkan.'
+            ]);
+        }
+
+        // ❗ INI INTINYA: BUKAN DELETE
+        $user->status_aktif = 0;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'User berhasil dinonaktifkan (tidak dihapus).'
+        ]);
     }
+
     return redirect('/');
 }
 

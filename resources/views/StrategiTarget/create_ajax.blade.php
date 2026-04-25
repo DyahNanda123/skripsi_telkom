@@ -1,112 +1,78 @@
-<form action="{{ url('/strategi-target/store_ajax') }}" method="POST" id="form-tambah" enctype="multipart/form-data">
+<form action="{{ url('/strategi-target/store_ajax') }}" method="POST" id="form-tambah-promo" enctype="multipart/form-data">
     @csrf
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content" style="border-radius: 12px; border: none;">
-            <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
-                <button type="button" class="close text-muted" data-dismiss="modal" aria-label="Close" style="font-size: 28px;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white font-weight-bold">
+                    <i class="fas fa-upload mr-2"></i> Upload Materi Promosi & Strategi
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            
-            <div class="modal-body px-5 pb-5 pt-2 bg-light" style="border-radius: 12px;">
-                
-                <div class="card border-0 mb-4 shadow-sm" style="border-radius: 10px;">
-                    <div class="card-body p-4">
-                        <h6 class="font-weight-bold mb-4" style="color: #333;">
-                            <i class="fas fa-bullseye text-danger mr-2"></i> Penetapan Target Sales
-                        </h6>
-                        
-                        <div class="row align-items-end">
-                            <div class="col-md-4 mb-3">
-                                <label class="small font-weight-bold text-muted mb-1">NAMA SALES</label>
-                                <select name="user_id" class="form-control" style="border-radius: 8px; background-color: #f8f9fa;">
-                                    <option value="">- Pilih Sales -</option>
-                                    @foreach($sales as $s)
-                                        <option value="{{ $s->id }}">{{ $s->nama_lengkap }}</option>
-                                    @endforeach
-                                </select>
-                                <small class="error-text user_id-error text-danger"></small>
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label class="small font-weight-bold text-muted mb-1">PERIODE (BULAN & TAHUN)</label>
-                                <input type="month" name="periode" class="form-control" value="{{ date('Y-m') }}" style="border-radius: 8px; background-color: #f8f9fa;">
-                                <small class="error-text periode-error text-danger"></small>
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label class="small font-weight-bold text-muted mb-1">TARGET (PS)</label>
-                                <input type="number" name="jumlah_target" class="form-control" placeholder="100" style="border-radius: 8px;">
-                                <small class="error-text jumlah_target-error text-danger"></small>
-                            </div>
-
-                            <div class="col-md-2 mb-3">
-                                <button type="submit" class="btn btn-danger btn-block font-weight-bold" style="border-radius: 8px;">
-                                    <i class="fas fa-save mr-1"></i> Simpan
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 pt-3 border-top">
-                            <label class="small font-weight-bold text-muted mb-3">TARGET YANG SUDAH DISET (BULAN INI):</label>
-                            <p class="text-muted small font-italic mb-0">Data target yang sudah diisi akan otomatis muncul di tabel utama.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm" style="border-radius: 10px;">
-                    <div class="card-body p-4">
-                        <h6 class="font-weight-bold mb-4" style="color: #333;">
-                            <i class="fas fa-file-upload text-danger mr-2"></i> Upload Materi Promosi & Strategi
-                        </h6>
-                        
+            <div class="modal-body bg-light">
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-body">
                         <div class="row">
-                            <div class="col-md-7 border-right pr-4">
-                                <div class="form-group mb-3">
-                                    <label class="small font-weight-bold text-muted mb-1">JUDUL MATERI</label>
-                                    <input type="text" name="judul" class="form-control" placeholder="Contoh: Promo Ramadhan" style="border-radius: 8px;">
-                                    <small class="error-text judul-error text-danger"></small>
+                            {{-- Sisi Kiri: Detail Teks --}}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold text-dark small">JUDUL MATERI</label>
+                                    <input type="text" class="form-control" name="judul" placeholder="Contoh: Promo Ramadhan" required style="border-radius: 8px;">
+                                    <small id="error-judul" class="error-text form-text text-danger"></small>
                                 </div>
-                                
-                                <div class="form-group mb-3">
-                                    <label class="small font-weight-bold text-muted mb-1">DESKRIPSI / INSTRUKSI</label>
-                                    <textarea name="deskripsi" class="form-control" rows="3" placeholder="Jelaskan detail promo atau strategi ini untuk sales..." style="border-radius: 8px;"></textarea>
-                                    <small class="error-text deskripsi-error text-danger"></small>
+                                <div class="form-group">
+                                    <label class="font-weight-bold text-dark small">DESKRIPSI / INSTRUKSI</label>
+                                    <textarea class="form-control" name="deskripsi" rows="4" placeholder="Jelaskan detail promo atau strategi ini untuk sales..." style="border-radius: 8px;"></textarea>
+                                    <small id="error-deskripsi" class="error-text form-text text-danger"></small>
                                 </div>
-
-                                <div class="form-group mb-3">
-                                    <label class="small font-weight-bold text-muted mb-1">KATEGORI</label>
-                                    <select name="kategori" class="form-control" style="border-radius: 8px;">
+                                <div class="form-group">
+                                    <label class="font-weight-bold text-dark small">KATEGORI</label>
+                                    <select class="form-control" name="kategori" required style="border-radius: 8px;">
                                         <option value="">- Pilih Kategori -</option>
-                                        <option value="brosur">Brosur</option>
-                                        <option value="poster">Poster</option>
-                                        <option value="video">Video</option>
-                                        <option value="presentasi">Presentasi</option>
-                                        <option value="lainnya">Lainnya</option>
+                                        <option value="Brosur">Brosur</option>
+                                        <option value="Flyer">Flyer</option>
+                                        <option value="Video">Video</option>
+                                        <option value="Lainnya">Lainnya</option>
                                     </select>
-                                    <small class="error-text kategori-error text-danger"></small>
+                                    <small id="error-kategori" class="error-text form-text text-danger"></small>
+                                </div>
+                                                                {{-- TAMBAHKAN INI: Input Tanggal Kadaluwarsa --}}
+                                <div class="form-group">
+                                    <label class="font-weight-bold text-dark small">TANGGAL KADALUWARSA</label>
+                                    <input type="date" class="form-control" name="tanggal_kadaluwarsa" required style="border-radius: 8px;" min="{{ date('Y-m-d') }}">
+                                    <small class="text-muted" style="font-size: 11px;">
+                                        <i class="fas fa-info-circle mr-1"></i> Materi akan otomatis tersembunyi setelah tanggal ini berakhir.
+                                    </small>
+                                    <small id="error-tanggal_kadaluwarsa" class="error-text form-text text-danger"></small>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-5 pl-4 d-flex flex-column justify-content-center">
-                                <label class="small font-weight-bold text-muted mb-1">FILE UPLOAD</label>
-                                
-                                <div class="border border-dashed text-center p-4 mb-3" style="border-radius: 10px; border-width: 2px; border-style: dashed !important; border-color: #ddd; background-color: #fafafa;">
-                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
-                                    <p class="mb-0 font-weight-bold" style="color: #666;">Drag file ke sini</p>
-                                    <small class="text-muted">Atau klik untuk memilih (JPG, PNG, PDF. Max 5MB)</small>
-                                    <input type="file" name="file_promo" class="form-control-file mt-2 w-100 mx-auto" style="cursor: pointer;">
-                                    <small class="error-text file_promo-error text-danger d-block"></small>
-                                </div>
 
-                                <button type="submit" class="btn btn-danger btn-block font-weight-bold" style="border-radius: 8px; padding: 10px;">
-                                    <i class="fas fa-upload mr-1"></i> Upload & Bagikan
-                                </button>
+                            {{-- Sisi Kanan: Upload Area --}}
+                            <div class="col-md-6">
+                                <div class="form-group h-100">
+                                    <label class="font-weight-bold text-dark small">FILE UPLOAD</label>
+                                    <div class="border rounded text-center d-flex flex-column justify-content-center align-items-center" style="background-color: #f8f9fa; border: 2px dashed #cbd5e1 !important; height: calc(100% - 30px); border-radius: 10px !important;">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-secondary mb-3 mt-3"></i>
+                                        <p class="font-weight-bold mb-1 text-dark">Drag file ke sini</p>
+                                        <p class="small text-muted mb-3">Atau klik untuk memilih (JPG, PNG, PDF. Max 5MB)</p>
+                                        
+                                        <input type="file" class="d-none" id="file_promo" name="file_promo" required accept=".jpg,.jpeg,.png,.pdf">
+                                        
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="document.getElementById('file_promo').click()" style="border-radius: 8px;">Browse...</button>
+                                        <div id="file-name-display" class="mb-3 small font-weight-bold text-danger">No file selected.</div>
+                                    </div>
+                                    <small id="error-file_promo" class="error-text form-text text-danger"></small>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
+            </div>
+            <div class="modal-footer bg-white" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                <button type="submit" class="btn btn-danger w-100" style="border-radius: 8px; font-weight: bold;">
+                    <i class="fas fa-upload mr-1"></i> Upload & Bagikan
+                </button>
             </div>
         </div>
     </div>
@@ -114,41 +80,56 @@
 
 <script>
     $(document).ready(function() {
-        $('#form-tambah').on('submit', function(e) {
+        // Ganti teks saat file dipilih
+        $('#file_promo').change(function() {
+            var fileName = $(this).val().split('\\').pop();
+            $('#file-name-display').text(fileName ? fileName : 'No file selected.');
+        });
+
+        // Proses submit form AJAX
+        $("#form-tambah-promo").on('submit', function(e) {
             e.preventDefault();
-            $('.error-text').text(''); // Bersihkan error lama
+            let form = $(this);
+            let formData = new FormData(this);
             
-            var form = $(this);
-            var formData = new FormData(this);
+            let btnSubmit = form.find('button[type="submit"]');
+            let originalText = btnSubmit.html();
+            btnSubmit.html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengupload...').prop('disabled', true);
+            
+            $('.error-text').text('');
 
             $.ajax({
                 url: form.attr('action'),
-                type: 'POST',
+                type: "POST",
                 data: formData,
-                processData: false,
+                cache: false,
                 contentType: false,
+                processData: false,
                 success: function(response) {
-                    if(response.status) {
-                        $('#myModal').modal('hide'); 
-                        
+                    if (response.status) {
+                        $('#myModal').modal('hide');
                         Swal.fire({
-                            title: 'Berhasil!',
-                            text: response.message,
                             icon: 'success',
+                            title: 'Berhasil',
+                            text: response.message,
                             timer: 1500,
                             showConfirmButton: false
+                        }).then(function() {
+                            location.reload();
                         });
-
-                        $('.card-body.bg-light.mt-3').load(window.location.href + ' .card-body.bg-light.mt-3 > *');
-                        
                     } else {
-                        $.each(response.msgField, function(prefix, val) {
-                            $('.'+prefix+'-error').text(val[0]);
-                        });
+                        if (response.msgField) {
+                            $.each(response.msgField, function(prefix, val) {
+                                $('#error-' + prefix).text(val[0]);
+                            });
+                        }
+                        Swal.fire('Gagal!', response.message, 'error');
+                        btnSubmit.html(originalText).prop('disabled', false);
                     }
                 },
-                error: function(xhr) {
-                    Swal.fire('Error', 'Terjadi kesalahan sistem!', 'error');
+                error: function() {
+                    Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error');
+                    btnSubmit.html(originalText).prop('disabled', false);
                 }
             });
         });

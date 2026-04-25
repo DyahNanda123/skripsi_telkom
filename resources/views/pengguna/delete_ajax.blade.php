@@ -9,14 +9,14 @@
                 
                 <h4 style="font-weight: 600; color: #333;">Konfirmasi Hapus</h4>
                 <p class="text-muted mb-4" style="font-size: 15px;">
-                    Apakah kamu yakin ingin menghapus pengguna <br>
+                   Apakah Anda yakin ingin menonaktifkan pengguna ini?<br>
                     <strong class="text-dark">{{ $user->nama_lengkap }}</strong>?
                 </p>
             </div>
 
             <div class="modal-footer border-0 justify-content-center pt-0 pb-3">
                 <button type="button" class="btn btn-outline-secondary px-4" data-dismiss="modal" style="border-radius: 25px; min-width: 120px;">Batal</button>
-                <button type="submit" class="btn btn-danger px-4" style="border-radius: 25px; min-width: 120px;">Ya, Hapus!</button>
+                <button type="submit" class="btn btn-danger px-4" style="border-radius: 25px; min-width: 120px;">Ya, Nonaktifkan!</button>
             </div>
         </form>
     </div>

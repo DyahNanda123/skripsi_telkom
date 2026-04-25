@@ -1,33 +1,54 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class AuthController extends Controller
 {
-    // Menampilkan halaman login
-    public function index() {
-        return view('login'); 
+    // Halaman login
+    public function index()
+    {
+        return view('login');
     }
 
-    // Mengecek proses login
-    public function authenticate(Request $request) {
-        $credentials = $request->validate([
+    // Proses login
+    public function authenticate(Request $request)
+    {
+        $request->validate([
             'nip' => 'required',
             'password' => 'required'
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/'); // Kalau sukses, lempar ke Dashboard
+        // cek user berdasarkan NIP dulu
+        $user = User::where('nip', $request->nip)->first();
+
+        if (!$user) {
+            return back()->with('error', 'NIP tidak terdaftar!');
         }
 
-        // Kalau gagal, kembalikan ke halaman login bawa pesan error
-        return back()->with('error', 'NIP atau Password salah!');
+        // cek status aktif
+        if ($user->status_aktif == 0) {
+            return back()->with('error', 'Akun Anda tidak aktif!');
+        }
+
+        // cek password
+        if (Auth::attempt([
+            'nip' => $request->nip,
+            'password' => $request->password
+        ])) {
+            $request->session()->regenerate();
+            return redirect()->intended('/');
+        }
+
+        return back()->with('error', 'Password salah!');
     }
 
-    // Proses logout
-    public function logout(Request $request) {
+    // Logout
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

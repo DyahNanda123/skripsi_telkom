@@ -17,40 +17,46 @@ use Illuminate\Support\Facades\Auth;
 class KunjunganController extends Controller
 {
     public function index()
-    {
-        $activeMenu = 'kunjungan'; 
-       
-        $breadcrumb = (object) [
-            'title' => 'Data Kunjungan Sales',
-            'list'  => ['Home', 'Kunjungan'] 
-        ];
+{
+    $activeMenu = 'kunjungan'; 
+    
+    $breadcrumb = (object) [
+        'title' => 'Data Kunjungan Sales',
+        'list'  => ['Home', 'Kunjungan'] 
+    ];
 
-        $sales = User::where('role', 'sales')->get();
+    $sales = User::where('role', 'sales')->get();
+    $user = Auth::user(); 
 
-        $user = Auth::user(); 
-   
-        //  HITUNG JUMLAH PROGRESS UNTUK REMINDER
-        $jumlahProgress = 0;
-        if ($user->role == 'sales') {
-            $jumlahProgress = Kunjungan::where('user_id', $user->id)
-                                      ->where('status', 'Progress')
-                                      ->count();
-            
-            // ambil data untuk kunjungan per sales
-            $kunjungans = Kunjungan::with('calonPelanggan')
-                                    ->where('user_id', $user->id)
-                                    ->get();
-        } else {
-            $kunjungans = Kunjungan::with(['calonPelanggan', 'user'])->get();
-        }
+    // 1. Inisialisasi variabel supaya tidak undefined di View
+    $jumlahProgress = 0;
+    $kunjungans = collect(); // Bikin koleksi kosong dulu biar aman
 
-        return view('kunjungan.index', compact('sales', 'activeMenu', 'breadcrumb', 'kunjungans', 'jumlahProgress'));
+    if ($user->role == 'sales') {
+        $jumlahProgress = Kunjungan::where('user_id', $user->id)
+                                  ->where('status', 'Progress')
+                                  ->count();
+        
+        $kunjungans = Kunjungan::with('calonPelanggan')
+                                ->where('user_id', $user->id)
+                                ->get();
+    } else {
+        // Ambil data untuk Admin/Pimpinan
+        $kunjungans = Kunjungan::with(['calonPelanggan', 'user'])->get();
     }
+
+    // Pastikan semua variabel ini masuk ke compact
+    return view('kunjungan.index', compact('sales', 'activeMenu', 'breadcrumb', 'kunjungans', 'jumlahProgress'));
+}
 
     public function list(Request $request)
     {
         $kunjungans = Kunjungan::with(['user', 'calonPelanggan'])
             ->select('kunjungan.*');
+        $tahun = $request->input('tahun', date('Y')); 
+    
+    // Filter data berdasarkan tahun dari kolom created_at
+    $kunjungans->whereYear('kunjungan.created_at', $tahun);
 
         if (auth()->user()->role == 'sales') {
             $kunjungans->where('user_id', auth()->id());
@@ -122,6 +128,7 @@ class KunjunganController extends Controller
     public function export_excel()
     {
         $kunjungans = Kunjungan::with(['user', 'calonPelanggan'])
+            ->whereYear('created_at', date('Y'))
             ->orderBy('created_at', 'desc')
             ->get();
 

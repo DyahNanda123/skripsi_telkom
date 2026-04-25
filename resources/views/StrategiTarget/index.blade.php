@@ -41,25 +41,25 @@
 
                     {{-- Filter Bulan --}}
                     <select class="form-control form-control-sm" id="filter_bulan" style="width: 130px; border-radius: 20px;">
-                        <option value="">- Bulan -</option>
-                        <option value="1" {{ request('bulan') == '1' ? 'selected' : '' }}>Januari</option>
-                        <option value="2" {{ request('bulan') == '2' ? 'selected' : '' }}>Februari</option>
-                        <option value="3" {{ request('bulan') == '3' ? 'selected' : '' }}>Maret</option>
-                        <option value="4" {{ request('bulan') == '4' ? 'selected' : '' }}>April</option>
-                        <option value="5" {{ request('bulan') == '5' ? 'selected' : '' }}>Mei</option>
-                        <option value="6" {{ request('bulan') == '6' ? 'selected' : '' }}>Juni</option>
-                        <option value="7" {{ request('bulan') == '7' ? 'selected' : '' }}>Juli</option>
-                        <option value="8" {{ request('bulan') == '8' ? 'selected' : '' }}>Agustus</option>
-                        <option value="9" {{ request('bulan') == '9' ? 'selected' : '' }}>September</option>
-                        <option value="10" {{ request('bulan') == '10' ? 'selected' : '' }}>Oktober</option>
-                        <option value="11" {{ request('bulan') == '11' ? 'selected' : '' }}>November</option>
-                        <option value="12" {{ request('bulan') == '12' ? 'selected' : '' }}>Desember</option>
+                        <option value="1"  {{ $bulanFilter == '1'  ? 'selected' : '' }}>Januari</option>
+                        <option value="2"  {{ $bulanFilter == '2'  ? 'selected' : '' }}>Februari</option>
+                        <option value="3"  {{ $bulanFilter == '3'  ? 'selected' : '' }}>Maret</option>
+                        <option value="4"  {{ $bulanFilter == '4'  ? 'selected' : '' }}>April</option>
+                        <option value="5"  {{ $bulanFilter == '5'  ? 'selected' : '' }}>Mei</option>
+                        <option value="6"  {{ $bulanFilter == '6'  ? 'selected' : '' }}>Juni</option>
+                        <option value="7"  {{ $bulanFilter == '7'  ? 'selected' : '' }}>Juli</option>
+                        <option value="8"  {{ $bulanFilter == '8'  ? 'selected' : '' }}>Agustus</option>
+                        <option value="9"  {{ $bulanFilter == '9'  ? 'selected' : '' }}>September</option>
+                        <option value="10" {{ $bulanFilter == '10' ? 'selected' : '' }}>Oktober</option>
+                        <option value="11" {{ $bulanFilter == '11' ? 'selected' : '' }}>November</option>
+                        <option value="12" {{ $bulanFilter == '12' ? 'selected' : '' }}>Desember</option>
                     </select>
+
+                    {{-- Filter Tahun --}}
                     <select class="form-control form-control-sm" id="filter_tahun" style="width: 150px; border-radius: 20px;">
-                        <option value="">- Semua Tahun -</option>
                         @php $tahunSekarang = date('Y'); @endphp
                         @for($t = $tahunSekarang; $t >= 2024; $t--)
-                            <option value="{{ $t }}">{{ $t }}</option>
+                            <option value="{{ $t }}" {{ $tahunFilter == $t ? 'selected' : '' }}>{{ $t }}</option>
                         @endfor
                     </select>
                 </div>
@@ -67,23 +67,29 @@
                 <div class="col-md-6 text-right">
                     {{-- Tombol Export Dropdown --}}
                     <div class="btn-group mr-1">
-                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" style="border-radius: 20px;">
-                            <i class="fas fa-upload"></i> Export
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right" style="border-radius: 10px;">
-                            <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ request('sales') }}&bulan={{ request('bulan') }}">
-                                <i class="fas fa-file-excel text-success mr-2"></i> Export Excel
-                            </a>
-                            <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ request('sales') }}&bulan={{ request('bulan') }}">
-                                <i class="fas fa-file-pdf text-danger mr-2"></i> Export PDF
-                            </a>
-                        </div>
+                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" style="border-radius: 20px;">
+                        <i class="fas fa-upload"></i> Export
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" style="border-radius: 10px;">
+                        <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}">
+                            <i class="fas fa-file-excel text-success mr-2"></i> Excel
+                        </a>
+                        <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}" target="_blank">
+                            <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
+                        </a>
                     </div>
+                </div>
                     
                     {{-- TOMBOL ADD KHUSUS PIMPINAN --}}
                     @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+                        {{-- Tombol Buka Form Target Massal (Tampil di bawahnya) --}}
+                        <button class="btn btn-warning btn-sm text-dark mr-1" type="button" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 20px; padding: 5px 15px; font-weight: bold;">
+                            <i class="fas fa-users mr-1"></i> Set Target Massal
+                        </button>
+                        
+                        {{-- Tombol Buka Modal Promo --}}
                         <button onclick="modalAction('{{ url('/strategi-target/create_ajax') }}')" class="btn btn-danger btn-sm" style="border-radius: 20px; padding: 5px 15px;">
-                            <i class="fas fa-plus mr-1"></i> Add Target & Strategi
+                            <i class="fas fa-plus mr-1"></i> Upload Promosi
                         </button>
                     @endif
                 </div>
@@ -93,8 +99,67 @@
         {{-- BODY: ISI KONTEN TARGET & MATERI --}}
         <div class="card-body bg-light mt-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
             
+            {{-- FITUR BARU: FORM TARGET MASSAL (Tersembunyi secara default) --}}
+           {{-- FITUR BARU: FORM TARGET MASSAL (Tersembunyi secara default) --}}
+            @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+            <div class="collapse mb-4" id="collapseTargetMassal">
+                <div class="card card-body border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #dc3545 !important;">
+                    <h5 class="font-weight-bold mb-3" style="color: #333;"><i class="fas fa-bullseye text-danger mr-2"></i> Form Target Bulanan Massal</h5>
+                    
+                    <form id="formTargetMassal" action="{{ url('/strategi-target/store_ajax') }}" method="POST">
+                        @csrf
+                        <div class="row mb-3 align-items-center">
+                            <label class="col-sm-2 mb-0 font-weight-bold">Periode Target :</label>
+                            <div class="col-sm-3">
+                                <input type="month" name="periode" class="form-control" value="{{ date('Y-m') }}" required style="border-radius: 10px;">
+                            </div>
+                            <div class="col-sm-7 text-muted small">
+                                *Isi angka target pada kolom di bawah ini. Kosongkan jika sales tidak diberi target bulan ini.
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-custom table-bordered mb-0" style="background: #fff; border-radius: 10px; overflow: hidden;">
+                                <thead style="background: #f8f9fa;">
+                                    <tr>
+                                        <th width="5%" class="text-center">NO</th>
+                                        <th width="50%">NAMA SALES</th>
+                                        <th width="45%" class="text-center">TARGET BULANAN (PS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php $noSales = 1; @endphp
+                                    @foreach($sales as $s)
+                                        @if($s->status_aktif == 1) {{-- Hanya nampilkan sales yang masih aktif --}}
+                                        <tr>
+                                            <td class="text-center">{{ $noSales++ }}</td>
+                                            <td class="font-weight-bold">{{ $s->nama_lengkap }}</td>
+                                            <td>
+                                                <div class="input-group">
+                                                    <input type="number" name="target[{{ $s->id }}]" class="form-control text-center" value="20" min="0" required style="border-radius: 10px 0 0 10px;">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="border-radius: 0 10px 10px 0; background: #fff;">PS</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-right mt-3">
+                            <button type="button" class="btn btn-secondary mr-2" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 10px;">Batal</button>
+                            <button type="submit" class="btn btn-danger font-weight-bold text-white" style="border-radius: 10px;"><i class="fas fa-save mr-1"></i> Simpan Semua Target</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
             {{-- KOTAK 1: REKAP TARGET SALES --}}
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div class="card border-0 mb-4" id="rekap-target-container" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                
                 <div class="card-header bg-white border-0 text-center pt-4 pb-2" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
                     <h5 class="font-weight-bold" style="color: #333;"><i class="fas fa-chart-bar text-primary mr-2"></i> Rekap Target Sales</h5>
                 </div>
@@ -208,7 +273,8 @@
             </div>
 
             {{-- KOTAK 2: MATERI PROMOSI AKTIF --}}
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            {{-- KOTAK 2: MATERI PROMOSI AKTIF --}}
+            <div class="card border-0" id="materi-promo-container" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-4 pb-2 border-bottom" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
                     <h5 class="font-weight-bold mb-0" style="color: #333;"><i class="fas fa-folder-open text-secondary mr-2"></i> Materi Promosi Aktif</h5>
                     <small class="text-muted font-weight-bold">Total File Aktif: {{ $promosis->count() }} File</small>
@@ -220,12 +286,16 @@
                             @php
                                 $ext = pathinfo($promo->file_path, PATHINFO_EXTENSION);
                                 $isImage = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif']);
+                                
+                                // Hitung sisa hari buat label (opsional biar keren)
+                                $tglKadaluwarsa = \Carbon\Carbon::parse($promo->tanggal_kadaluwarsa);
+                                $sisaHari = now()->diffInDays($tglKadaluwarsa, false);
                             @endphp
                             
                             <div class="col-md-6 mb-3">
                                 <div class="promo-card d-flex align-items-center justify-content-between p-3">
                                    
-                                    <div class="d-flex align-items-center" style="width: 80%; overflow: hidden;">
+                                    <div class="d-flex align-items-center" style="width: 75%; overflow: hidden;">
                                         @if($isImage)
                                             <div class="promo-icon-box bg-dark-img mr-3" style="background: url('{{ asset($promo->file_path) }}') center/cover; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
                                         @else
@@ -236,14 +306,20 @@
 
                                         <div style="min-width: 0;">
                                             <h6 class="font-weight-bold text-dark mb-1 text-truncate">{{ $promo->judul }}</h6>
-                                            <p class="small text-muted mb-1 text-truncate" style="line-height: 1.2;">{{ $promo->deskripsi ?? 'Tidak ada deskripsi' }}</p>
-                                            <small class="text-muted" style="font-size: 10px;">{{ \Carbon\Carbon::parse($promo->created_at)->format('d M Y') }}</small>
+                                            
+                                            {{-- TAMBAHAN: Label Kadaluwarsa --}}
+                                            <div class="mb-1">
+                                                <span class="badge {{ $sisaHari <= 3 ? 'badge-danger' : 'badge-light' }}" style="font-size: 10px; border-radius: 10px;">
+                                                    <i class="fas fa-clock mr-1"></i> Berlaku s/d: {{ $tglKadaluwarsa->format('d M Y') }}
+                                                </span>
+                                            </div>
+
+                                            <p class="small text-muted mb-0 text-truncate" style="line-height: 1.2;">{{ $promo->deskripsi ?? 'Tidak ada deskripsi' }}</p>
                                         </div>
                                     </div>
                                     
                                     {{-- Sisi Kanan: Tombol Aksi --}}
                                     <div class="d-flex align-items-center" style="gap: 5px;">
-                                        
                                         @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
                                             <button onclick="modalAction('{{ url('/strategi-target/promo/' . $promo->id . '/edit_ajax') }}')" class="btn-icon-only btn-edit" title="Edit">
                                                 <i class="fas fa-edit"></i>
@@ -283,11 +359,11 @@
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
-    $('#filter_sales, #filter_bulan').on('change', function() {
+    $('#filter_sales, #filter_bulan, #filter_tahun').on('change', function() {
         var sales_id = $('#filter_sales').val();
-        var bulan = $('#filter_bulan').val();
-        var tahun = $('#filter_tahun').val();
-        window.location.href = "{{ url('/strategi-target') }}?sales=" + sales_id + "&bulan=" + bulan;
+        var bulan    = $('#filter_bulan').val();
+        var tahun    = $('#filter_tahun').val();
+        window.location.href = "{{ url('/strategi-target') }}?sales=" + sales_id + "&bulan=" + bulan + "&tahun=" + tahun;
     });
 
     function modalAction(url) {
@@ -295,6 +371,52 @@
             $('#myModal').modal('show');
         });
     }
+
+    // Script AJAX untuk mengirim Target Massal tanpa pindah halaman
+   $('#formTargetMassal').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        
+        // Tampilkan loading di tombol biar user tau lagi proses
+        let btnSubmit = form.find('button[type="submit"]');
+        let originalText = btnSubmit.html();
+        btnSubmit.html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...').prop('disabled', true);
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if(response.status) {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: response.message,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // ✨ INI TRIK SULAPNYA BEB ✨
+                    // Refresh HANYA bagian kotak tabel rekap target
+                    $('#rekap-target-container').load(window.location.href + ' #rekap-target-container > *', function() {
+                        // Setelah tabel selesai di-refresh, tutup formnya biar rapi
+                        $('#collapseTargetMassal').collapse('hide'); 
+                        
+                        // Kembalikan tombol simpan ke kondisi semula
+                        btnSubmit.html(originalText).prop('disabled', false);
+                    });
+
+                } else {
+                    Swal.fire('Gagal!', response.message, 'error');
+                    btnSubmit.html(originalText).prop('disabled', false);
+                }
+            },
+            error: function() {
+                Swal.fire('Error!', 'Terjadi kesalahan sistem', 'error');
+                btnSubmit.html(originalText).prop('disabled', false);
+            }
+        });
+    });
 
     function deleteAction(url, element) {
         Swal.fire({

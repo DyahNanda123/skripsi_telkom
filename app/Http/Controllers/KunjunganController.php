@@ -97,13 +97,14 @@ class KunjunganController extends Controller
                             Isi Form
                             </button>';
                 }
-
                 if ($row->hasil_kunjungan == 'Berlangganan') {
-                    return '<span class="badge badge-success px-3 py-1" style="border-radius: 20px;"><i class="fas fa-check-circle mr-1"></i> Berlangganan</span>';
-                } elseif ($row->hasil_kunjungan == 'Belum') {
-                    return '<span class="badge badge-danger px-3 py-1" style="border-radius: 20px;"><i class="fas fa-times-circle mr-1"></i> Belum</span>';
+                    return '<span class="badge badge-success px-3 py-1" style="border-radius: 20px;"><i class="fas fa-check-circle mr-1"></i> Minat (PS)</span>';
+                } 
+                elseif ($row->hasil_kunjungan == 'Belum' || $row->hasil_kunjungan == 'Belum Berlangganan') {
+                    return '<span class="badge badge-danger px-3 py-1" style="border-radius: 20px;"><i class="fas fa-times-circle mr-1"></i> Belum Minat</span>';
                 }
-                return '<span class="badge badge-secondary px-3 py-1" style="border-radius: 20px; opacity: 0.7;">Belum Minat</span>';
+               
+                return '<span class="badge badge-secondary px-3 py-1" style="border-radius: 20px; opacity: 0.7;"><i class="fas fa-clock mr-1"></i> Sales Belum Input Hasil</span>';
             })
             ->addColumn('aksi', function ($row) {
                 return '<button onclick="modalAction(\''.url('/kunjungan/'.$row->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button>';
@@ -214,6 +215,11 @@ class KunjunganController extends Controller
     public function mulai($id)
 {
     $calonPelanggan = CalonPelanggan::findOrFail($id);
+    // kunci supaya tidak duplikat kunjungan
+    if ($calonPelanggan->status_visit == 'Progress' || $calonPelanggan->status_visit == 'Sudah Visit') {
+            // Tolak dan kembalikan ke halaman sebelumnya dengan pesan error
+            return redirect()->back()->with('error', 'Maaf, pelanggan ini sudah di-handle oleh sales lain!');
+        }
 
     $calonPelanggan->update([
         'status_visit' => 'Progress' 

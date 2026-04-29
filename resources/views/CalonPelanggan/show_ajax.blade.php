@@ -108,20 +108,40 @@
             </div>
         </div>
         <div class="modal-footer border-0 d-flex justify-content-end">
-        @if(auth()->check() && auth()->user()->role == 'sales')
-        <form action="{{ url('/kunjungan/mulai/' . $CalonPelanggan->id) }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-success px-4 me-2" style="border-radius: 8px;">
-                <i class="fas fa-clipboard-check"></i> Lakukan Kunjungan
+            
+            {{-- KHUSUS UNTUK SALES --}}
+            @if(auth()->check() && auth()->user()->role == 'sales')
+                
+                @if($CalonPelanggan->status_visit == 'Progress')
+                    {{-- Kalau lagi dipegang sales lain --}}
+                    <button type="button" class="btn btn-warning px-4 mr-2 disabled" style="border-radius: 8px; cursor: not-allowed;">
+                        <i class="fas fa-user-lock"></i> Sudah di Handle
+                    </button>
+                
+                @elseif($CalonPelanggan->status_visit == 'Sudah Visit')
+                    {{-- Kalau udah selesai dikunjungi --}}
+                    <button type="button" class="btn btn-secondary px-4 mr-2 disabled" style="border-radius: 8px; cursor: not-allowed;">
+                        <i class="fas fa-check-circle"></i> Kunjungan Selesai
+                    </button>
+                
+                @else
+                    {{-- Kalau masih perawan (Belum Visit) --}}
+                    <form action="{{ url('/kunjungan/mulai/' . $CalonPelanggan->id) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-success px-4 mr-2" style="border-radius: 8px;">
+                            <i class="fas fa-clipboard-check"></i> Lakukan Kunjungan
+                        </button>
+                    </form>
+                @endif
+
+            @endif
+
+            <button type="button" 
+                    class="btn btn-danger px-4" 
+                    data-dismiss="modal" 
+                    style="border-radius: 8px;">
+                Tutup
             </button>
-        </form>
-        @endif
-        <button type="button" 
-                class="btn btn-danger px-4" 
-                data-dismiss="modal" 
-                style="border-radius: 8px;">
-            Tutup
-        </button>
-        </div> 
+        </div>
     </div>
 </div>

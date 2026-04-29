@@ -82,9 +82,10 @@ class CalonPelangganController extends Controller
             return '<span class="badge badge-warning px-3 py-1" style="border-radius: 20px;">Belum Visit</span>';
         })
         ->addColumn('aksi', function ($pelanggan) {
+            // Cuma ikon mata untuk Detail
             $btn = '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/show_ajax').'\')" class="btn btn-sm text-dark"><i class="fas fa-eye"></i></button> ';
 
-            // Hak akses: cuma admin yang bisa edit & hapus
+            // Admin tetap punya akses edit & hapus
             if (auth()->user()->role == 'admin') {
                 $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/edit_ajax').'\')" class="btn btn-sm text-primary"><i class="fas fa-edit"></i></button> ';
                 $btn .= '<button onclick="modalAction(\''.url('/calon_pelanggan/'.$pelanggan->id.'/delete_ajax').'\')" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button>';

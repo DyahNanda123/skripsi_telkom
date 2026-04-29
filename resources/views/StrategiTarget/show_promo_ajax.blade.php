@@ -36,9 +36,14 @@
                                 <div class="col-6">
                                     <label class="small font-weight-bold text-muted mb-1 d-block text-uppercase">Berlaku Sampai</label>
                                     <div class="text-danger font-weight-bold" style="font-size: 15px;">
-                                        <i class="fas fa-calendar-times mr-1"></i>
-                                        {{ $promo->tanggal_kadaluwarsa ? \Carbon\Carbon::parse($promo->tanggal_kadaluwarsa)->format('d M Y') : 'Selamanya' }}
-                                    </div>
+                                    <i class="fas fa-calendar-times mr-1"></i>
+                                    {{-- Kita cek langsung apakah isinya null/kosong --}}
+                                    @if($promo->tanggal_kadaluwarsa != null)
+                                        {{ \Carbon\Carbon::parse($promo->tanggal_kadaluwarsa)->translatedFormat('d M Y') }}
+                                    @else
+                                        Selamanya
+                                    @endif
+                                </div>
                                 </div>
                             </div>
 

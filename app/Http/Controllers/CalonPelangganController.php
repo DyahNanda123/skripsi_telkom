@@ -12,6 +12,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class CalonPelangganController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     // 1. Menampilkan Halaman Awal Tabel Calon Pelanggan
     public function index()
     {
@@ -187,7 +191,7 @@ class CalonPelangganController extends Controller
 
                 return response()->json([
                     'status'  => true,
-                    'message' => 'Data pengguna berhasil diperbarui!'
+                    'message' => 'Data pelanggan berhasil diperbarui!'
                 ]);
             }
         }
@@ -202,7 +206,7 @@ class CalonPelangganController extends Controller
         if (!$CalonPelanggan) {
             return response()->json([
                 'status' => false, 
-                'message' => 'Data pengguna tidak ditemukan'
+                'message' => 'Data pelanggan tidak ditemukan'
             ]);
         }
 
@@ -233,7 +237,7 @@ class CalonPelangganController extends Controller
                 
                 return response()->json([
                     'status' => true,
-                    'message' => 'Data pengguna berhasil dihapus!'
+                    'message' => 'Data pelanggan berhasil dihapus!'
                 ]);
             } else {
                 return response()->json([

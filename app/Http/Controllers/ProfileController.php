@@ -23,6 +23,8 @@ class ProfileController extends Controller
     {
         $user = User::find(Auth::id());
 
+        // PERBAIKAN DI SINI BEBB: 
+        // Menggabungkan aturan (rules) dan pesan (messages) dalam satu fungsi validate()
         $request->validate([
             'nama_lengkap'  => 'required|string|max:255',
             'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
@@ -31,6 +33,9 @@ class ProfileController extends Controller
             'alamat'        => 'nullable|string',
             'foto_profil'   => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Maksimal 2MB
             'password'      => 'nullable|min:8', 
+        ], [
+            // Pesan error custom ditaruh di sini
+            'password.min'  => 'Password minimal harus 8 karakter!'
         ]);
 
         $user->nama_lengkap  = $request->nama_lengkap;

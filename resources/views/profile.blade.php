@@ -13,7 +13,7 @@
                     icon: 'success',
                     title: 'SUKSES',
                     text: 'DATA BERHASIL DISIMPAN!',
-                    confirmButtonColor: '#28a745', // Warna tombol hijau
+                    confirmButtonColor: '#28a745', 
                     confirmButtonText: 'Continue',
                     customClass: {
                         title: 'font-weight-bold'
@@ -67,10 +67,18 @@
                                     <label>Wilayah Kerja</label>
                                     <input type="text" name="wilayah_kerja" class="form-control" value="{{ auth()->user()->wilayah_kerja }}" placeholder="Contoh: Witel Ngawi">
                                 </div>
+                                
+                                {{-- PERUBAHAN DI SINI BEBB! Penambahan @error penangkap validasi --}}
                                 <div class="form-group">
                                     <label>Password Baru</label>
-                                    <input type="password" name="password" class="form-control" placeholder="Kosongkan jika tidak ganti">
+                                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Kosongkan jika tidak ganti">
+                                    @error('password')
+                                        <small class="text-danger font-weight-bold mt-1 d-block">
+                                            <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
+                                        </small>
+                                    @enderror
                                 </div>
+
                                 <div class="form-group">
                                     <label>Foto Profil Baru</label>
                                     <input type="file" name="foto_profil" class="form-control" accept="image/png, image/jpeg, image/jpg">

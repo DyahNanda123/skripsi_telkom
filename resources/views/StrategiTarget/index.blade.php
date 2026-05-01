@@ -2,8 +2,9 @@
 
 @push('css')
 <style>
-    .table-custom thead th { background-color: #f9f9f9; color: #888; font-size: 11px; font-weight: 600; text-transform: uppercase; border-bottom: none; padding: 12px 15px; }
-    .table-custom tbody td { vertical-align: middle; border-bottom: 1px solid #f0f0f0; padding: 15px; color: #333; }
+    /* Disesuaikan biar paddingnya compact kayak tabel DataTables sebelumnya */
+    .table-custom thead th { background-color: #f9f9f9; color: #888; font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: none; padding: 10px 12px; }
+    .table-custom tbody td { vertical-align: middle; border-bottom: 1px solid #f0f0f0; padding: 8px 10px; color: #333; font-size: 14px; }
     .progress-custom { height: 6px; border-radius: 10px; background-color: #e9ecef; margin-top: 5px; }
     
     .badge-status { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 11px; display: inline-block; white-space: nowrap; }
@@ -14,8 +15,15 @@
     .bg-dark-img { background: #333 url('https://via.placeholder.com/60') center/cover; color: #fff; }
     .bg-light-danger { background: #fee2e2; color: #ef4444; }
 
-    .btn-icon-only { background: transparent; border: none; padding: 5px 8px; font-size: 16px; transition: 0.2s; cursor: pointer; }
-    .btn-icon-only:hover { transform: scale(1.1); }
+    /* Mencegah isi kolom action turun ke bawah */
+    .table-custom td:last-child {
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    /* Bikin tombol action (Mata, Edit, Hapus) ukurannya imut dan pas */
+    .btn-icon-only { background: transparent; border: 1px solid transparent; padding: 0.2rem 0.4rem; font-size: 14px; transition: 0.2s; cursor: pointer; border-radius: 4px; margin: 0 2px; }
+    .btn-icon-only:hover { transform: scale(1.1); border-color: #ddd; background: #f8f9fa; }
     .btn-edit { color: #007bff; }
     .btn-delete { color: #dc3545; }
     .btn-view { color: #495057; }
@@ -26,13 +34,14 @@
 <div class="container-fluid pt-2">
     <div class="card card-outline card-danger" style="border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
         
-        {{-- HEADER: FILTER & TOMBOL EXPORT/ADD --}}
+        {{-- HEADER: FILTER & TOMBOL EXPORT/ADD DIBUAT RATA KIRI KANAN --}}
         <div class="card-header border-0 pb-0 pt-3">
-            <div class="row align-items-center">
-                <div class="col-md-6 d-flex gap-2 flex-wrap">
-                    
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                
+                {{-- Sisi Kiri: Filter --}}
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-2 mb-md-0">
                     {{-- Filter Nama Sales --}}
-                    <select class="form-control form-control-sm mr-2" id="filter_sales" style="width: 150px; border-radius: 20px;">
+                    <select class="form-control form-control-sm" id="filter_sales" style="width: 150px; border-radius: 20px; margin-right: 8px;">
                         <option value="">- Semua Sales -</option>
                         @foreach($sales as $s)
                             <option value="{{ $s->id }}" {{ request('sales') == $s->id ? 'selected' : '' }}>{{ $s->nama_lengkap }}</option>
@@ -40,7 +49,7 @@
                     </select>
 
                     {{-- Filter Bulan --}}
-                    <select class="form-control form-control-sm" id="filter_bulan" style="width: 130px; border-radius: 20px;">
+                    <select class="form-control form-control-sm" id="filter_bulan" style="width: 130px; border-radius: 20px; margin-right: 8px;">
                         <option value="1"  {{ $bulanFilter == '1'  ? 'selected' : '' }}>Januari</option>
                         <option value="2"  {{ $bulanFilter == '2'  ? 'selected' : '' }}>Februari</option>
                         <option value="3"  {{ $bulanFilter == '3'  ? 'selected' : '' }}>Maret</option>
@@ -64,30 +73,29 @@
                     </select>
                 </div>
                 
-                <div class="col-md-6 text-right">
+                {{-- Sisi Kanan: Tombol Export, Set Target, Upload Promo --}}
+                <div class="d-flex align-items-center gap-2">
                     {{-- Tombol Export Dropdown --}}
-                    <div class="btn-group mr-1">
-                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" style="border-radius: 20px;">
-                        <i class="fas fa-upload"></i> Export
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right" style="border-radius: 10px;">
-                        <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}">
-                            <i class="fas fa-file-excel text-success mr-2"></i> Excel
-                        </a>
-                        <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}" target="_blank">
-                            <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
-                        </a>
+                    <div class="btn-group" style="margin-right: 8px;">
+                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" style="border-radius: 20px; border: 1px solid #ced4da;">
+                            <i class="fas fa-upload"></i> Export
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" style="border-radius: 10px;">
+                            <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}">
+                                <i class="fas fa-file-excel text-success mr-2"></i> Excel
+                            </a>
+                            <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}" target="_blank">
+                                <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
+                            </a>
+                        </div>
                     </div>
-                </div>
                     
                     {{-- TOMBOL ADD KHUSUS PIMPINAN --}}
-                    @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
-                        {{-- Tombol Buka Form Target Massal (Tampil di bawahnya) --}}
-                        <button class="btn btn-warning btn-sm text-dark mr-1" type="button" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 20px; padding: 5px 15px; font-weight: bold;">
+                    @if(auth()->user()->role == 'pimpinan')
+                        <button class="btn btn-warning btn-sm text-dark" type="button" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 20px; padding: 5px 15px; font-weight: bold; margin-right: 8px;">
                             <i class="fas fa-users mr-1"></i> Set Target Massal
                         </button>
                         
-                        {{-- Tombol Buka Modal Promo --}}
                         <button onclick="modalAction('{{ url('/strategi-target/create_ajax') }}')" class="btn btn-danger btn-sm" style="border-radius: 20px; padding: 5px 15px;">
                             <i class="fas fa-plus mr-1"></i> Upload Promosi
                         </button>
@@ -100,7 +108,6 @@
         <div class="card-body bg-light mt-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
             
             {{-- FITUR BARU: FORM TARGET MASSAL (Tersembunyi secara default) --}}
-           {{-- FITUR BARU: FORM TARGET MASSAL (Tersembunyi secara default) --}}
             @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
             <div class="collapse mb-4" id="collapseTargetMassal">
                 <div class="card card-body border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #dc3545 !important;">
@@ -136,9 +143,9 @@
                                             <td class="font-weight-bold">{{ $s->nama_lengkap }}</td>
                                             <td>
                                                 <div class="input-group">
-                                                    <input type="number" name="target[{{ $s->id }}]" class="form-control text-center" value="20" min="0" required style="border-radius: 10px 0 0 10px;">
+                                                    <input type="number" name="target[{{ $s->id }}]" class="form-control text-center form-control-sm" value="20" min="0" required style="border-radius: 10px 0 0 10px;">
                                                     <div class="input-group-append">
-                                                        <span class="input-group-text" style="border-radius: 0 10px 10px 0; background: #fff;">PS</span>
+                                                        <span class="input-group-text py-0" style="border-radius: 0 10px 10px 0; background: #fff; font-size: 14px;">PS</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -149,8 +156,8 @@
                             </table>
                         </div>
                         <div class="text-right mt-3">
-                            <button type="button" class="btn btn-secondary mr-2" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 10px;">Batal</button>
-                            <button type="submit" class="btn btn-danger font-weight-bold text-white" style="border-radius: 10px;"><i class="fas fa-save mr-1"></i> Simpan Semua Target</button>
+                            <button type="button" class="btn btn-secondary btn-sm mr-2" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 10px;">Batal</button>
+                            <button type="submit" class="btn btn-danger btn-sm font-weight-bold text-white" style="border-radius: 10px;"><i class="fas fa-save mr-1"></i> Simpan Semua Target</button>
                         </div>
                     </form>
                 </div>
@@ -159,7 +166,6 @@
 
             {{-- KOTAK 1: REKAP TARGET SALES --}}
             <div class="card border-0 mb-4" id="rekap-target-container" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                
                 <div class="card-header bg-white border-0 text-center pt-4 pb-2" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
                     <h5 class="font-weight-bold" style="color: #333;"><i class="fas fa-chart-bar text-primary mr-2"></i> Rekap Target Sales</h5>
                 </div>
@@ -182,7 +188,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                         
                                 @forelse($targets as $index => $t)
                                     @php
                                         $namaBulan = ['1'=>'Januari','2'=>'Februari','3'=>'Maret','4'=>'April','5'=>'Mei','6'=>'Juni','7'=>'Juli','8'=>'Agustus','9'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'];
@@ -273,7 +278,6 @@
             </div>
 
             {{-- KOTAK 2: MATERI PROMOSI AKTIF --}}
-            {{-- KOTAK 2: MATERI PROMOSI AKTIF --}}
             <div class="card border-0" id="materi-promo-container" style="border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-4 pb-2 border-bottom" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
                     <h5 class="font-weight-bold mb-0" style="color: #333;"><i class="fas fa-folder-open text-secondary mr-2"></i> Materi Promosi Aktif</h5>
@@ -287,7 +291,7 @@
                                 $ext = pathinfo($promo->file_path, PATHINFO_EXTENSION);
                                 $isImage = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif']);
                                 
-                                // Hitung sisa hari buat label (opsional biar keren)
+                                // Hitung sisa hari buat label
                                 $tglKadaluwarsa = \Carbon\Carbon::parse($promo->tanggal_kadaluwarsa);
                                 $sisaHari = now()->diffInDays($tglKadaluwarsa, false);
                             @endphp
@@ -354,6 +358,7 @@
 @endsection
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $.ajaxSetup({
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
@@ -377,7 +382,6 @@
         e.preventDefault();
         let form = $(this);
         
-        // Tampilkan loading di tombol biar user tau lagi proses
         let btnSubmit = form.find('button[type="submit"]');
         let originalText = btnSubmit.html();
         btnSubmit.html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...').prop('disabled', true);
@@ -396,13 +400,8 @@
                         showConfirmButton: false
                     });
 
-                    // ✨ INI TRIK SULAPNYA BEB ✨
-                    // Refresh HANYA bagian kotak tabel rekap target
                     $('#rekap-target-container').load(window.location.href + ' #rekap-target-container > *', function() {
-                        // Setelah tabel selesai di-refresh, tutup formnya biar rapi
                         $('#collapseTargetMassal').collapse('hide'); 
-                        
-                        // Kembalikan tombol simpan ke kondisi semula
                         btnSubmit.html(originalText).prop('disabled', false);
                     });
 

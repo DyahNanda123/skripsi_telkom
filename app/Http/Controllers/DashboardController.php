@@ -150,9 +150,19 @@ class DashboardController extends Controller
         $totalTargetRencana = TargetSales::where('tahun', $tahun)->when($bulan, fn($q) => $q->where('bulan', $bulan))->sum('jumlah_target');
         $pencapaianTarget = $totalTargetRencana > 0 ? round(($customerPS / $totalTargetRencana) * 100, 1) : 0;
 
+        $psPerSTO = Kunjungan::join('calon_pelanggan', 'kunjungan.calon_pelanggan_id', '=', 'calon_pelanggan.id')
+            ->select('calon_pelanggan.sto', DB::raw('count(*) as total'))
+            ->whereYear('kunjungan.created_at', $tahun)->where('kunjungan.hasil_kunjungan', 'Berlangganan')
+            ->when($bulan, fn($q) => $q->whereMonth('kunjungan.created_at', $bulan))
+            ->groupBy('calon_pelanggan.sto')->get();
+
+        $labelSTO = $psPerSTO->pluck('sto')->toArray();
+        $dataSTO = $psPerSTO->pluck('total')->toArray();
+        
         return view('dashboard.admin', compact(
             'breadcrumb', 'activeMenu', 'bulan', 'tahun', 'totalVisit', 'customerPS', 'konversiProspek', 'growth',
-            'labelBulan', 'dataVisitGrafik', 'dataPSGrafik', 'topSales', 'totalTargetRencana', 'pencapaianTarget'
+            'labelBulan', 'dataVisitGrafik', 'dataPSGrafik', 'topSales', 'totalTargetRencana', 'pencapaianTarget',
+            'labelSTO', 'dataSTO' // <-- Nah, ini dia tiket masuknya biar ga error lagi!
         ));
     }
 }

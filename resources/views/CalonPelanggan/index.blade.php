@@ -1,6 +1,10 @@
 @extends('layouts.template')
 
 @section('content')
+<!-- TAMBAHAN CSS LEAFLET & GEOCODER -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
 <style>
     /* Bikin jarak dalam tabel jadi compact persis kayak halaman Pengguna */
     #table_calon_pelanggan th,
@@ -28,6 +32,11 @@
         overflow-x: auto;
         overflow-y: visible;
     }
+
+    /* TAMBAHAN CSS PETA: Mencegah modal peta tenggelam di belakang modal form */
+    .modal:nth-of-type(even) { z-index: 1062 !important; }
+    .modal-backdrop.show:nth-of-type(even) { z-index: 1061 !important; }
+    .leaflet-container { z-index: 1050 !important; }
 </style>
 
 <div class="container-fluid">
@@ -125,6 +134,10 @@
 @endsection
 
 @push('js')
+<!-- TAMBAHAN JS LEAFLET & GEOCODER (Ditaruh sebelum script kamu) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <script>
     $.ajaxSetup({
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }

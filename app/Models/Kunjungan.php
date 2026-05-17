@@ -23,6 +23,8 @@ class Kunjungan extends Model
         'speed_eksisting',
         'provider_eksisting',
         'tagihan_bulanan',
+        'lat_visit', 
+        'lng_visit',
     ];
 
     public function user()

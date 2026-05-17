@@ -9,7 +9,6 @@
                 </small>
             </div>
             <div>
-    
                 @if($kunjungan->status == 'Selesai')
                     <span class="badge badge-success px-4 py-2" style="border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;">SELESAI</span>
                 @elseif($kunjungan->status == 'Progress')
@@ -104,22 +103,34 @@
                     <div class="col-md-6 mt-3 mt-md-0">
                         <label class="small text-muted text-uppercase mb-2" style="font-weight: 600; font-size: 11px; letter-spacing: 0.5px;">Bukti Foto Lokasi</label>
                         <div class="p-1" style="background-color: #fff; border: 1px solid #edf2f7; border-radius: 8px; height: 150px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background-color: #e2e8f0;">
-                            
                             @if($kunjungan->bukti_foto)
                                 <img src="{{ asset('uploads/kunjungan/' . $kunjungan->bukti_foto) }}" alt="Bukti Foto" style="width: 100%; height: 100%; object-fit: cover;">
-                                <div style="position: absolute; bottom: 8px; left: 8px; background-color: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 4px 10px; border-radius: 15px;">
-                                    <i class="fas fa-map-marker-alt text-danger mr-1"></i> {{ $kunjungan->calonPelanggan->nama_pelanggan ?? 'Lokasi' }}
-                                </div>
                             @else
                                 <div class="text-center text-muted">
                                     <i class="fas fa-image fa-2x mb-2 text-secondary"></i><br>
                                     <small>Belum ada foto yang diunggah</small>
                                 </div>
                             @endif
-
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- BAGIAN TRACKING LOKASI (BARU) -->
+            <h6 class="font-weight-bold mb-3 mt-5" style="color: #4a5568;">VERIFIKASI LOKASI KUNJUNGAN</h6>
+            <div class="p-3" style="border: 1px solid #e2e8f0; border-radius: 12px;">
+                @if($kunjungan->lat_visit && $kunjungan->lng_visit)
+                    <div id="mapShow" style="height: 300px; width: 100%; border-radius: 10px; border: 1px solid #ddd;"></div>
+                    <div class="d-flex justify-content-between mt-2 px-1">
+                        <small class="text-muted"><i class="fas fa-map-marker-alt text-danger"></i> Titik Merah: Lokasi Toko</small>
+                        <small class="text-muted"><i class="fas fa-street-view text-primary"></i> Titik Biru: Posisi Sales</small>
+                    </div>
+                @else
+                    <div class="text-center py-4 bg-light rounded" style="border: 1px dashed #cbd5e0;">
+                        <i class="fas fa-map-marked-alt fa-2x text-muted mb-2"></i><br>
+                        <span class="text-muted small">Data koordinat GPS tidak terekam pada kunjungan ini.</span>
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -129,3 +140,55 @@
         </div>
     </div>
 </div>
+
+<script>
+    $(document).ready(function() {
+        @if($kunjungan->lat_visit && $kunjungan->lng_visit)
+            // Inisialisasi peta fokus ke posisi sales
+            var mapShow = L.map('mapShow').setView([{{ $kunjungan->lat_visit }}, {{ $kunjungan->lng_visit }}], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(mapShow);
+
+            // 1. Marker Posisi Sales (Biru)
+            L.marker([{{ $kunjungan->lat_visit }}, {{ $kunjungan->lng_visit }}]).addTo(mapShow)
+                .bindPopup("<b>Posisi Sales</b><br>Saat simpan laporan.")
+                .openPopup();
+
+            // 2. Marker Posisi Toko (Merah) - Diambil dari link_maps di tabel pelanggan
+            @if($kunjungan->calonPelanggan && $kunjungan->calonPelanggan->link_maps)
+                @php
+                    // Extract koordinat dari URL Google Maps (q=lat,lng)
+                    preg_match('/q=(-?\d+\.\d+),(-?\d+\.\d+)/', $kunjungan->calonPelanggan->link_maps, $matches);
+                    $lat_toko = $matches[1] ?? null;
+                    $lng_toko = $matches[2] ?? null;
+                @endphp
+
+                @if($lat_toko && $lng_toko)
+                    var redIcon = L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
+
+                    L.marker([{{ $lat_toko }}, {{ $lng_toko }}], {icon: redIcon}).addTo(mapShow)
+                        .bindPopup("<b>Lokasi Toko Master</b>");
+                    
+                    // Zoom out sedikit biar dua-duanya kelihatan
+                    var group = new L.featureGroup([
+                        L.marker([{{ $kunjungan->lat_visit }}, {{ $kunjungan->lng_visit }}]),
+                        L.marker([{{ $lat_toko }}, {{ $lng_toko }}])
+                    ]);
+                    mapShow.fitBounds(group.getBounds().pad(0.5));
+                @endif
+            @endif
+
+            // Fix modal rendering issue
+            setTimeout(function(){ mapShow.invalidateSize(); }, 500);
+        @endif
+    });
+</script>

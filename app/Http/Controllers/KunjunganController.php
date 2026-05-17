@@ -246,10 +246,13 @@ public function isi_form_ajax($id)
 
 public function simpan_hasil_ajax(Request $request, $id)
 {
+    // 1. TAMBAHKAN VALIDASI UNTUK KOORDINAT GPS
     $validator = Validator::make($request->all(), [
         'hasil_kunjungan' => 'required',
         'catatan_sales' => 'required', 
-        'bukti_foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+        'bukti_foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        'lat_visit' => 'nullable|string', // Tambahkan ini
+        'lng_visit' => 'nullable|string'  // Tambahkan ini
     ]);
 
     if ($validator->fails()) {
@@ -258,7 +261,7 @@ public function simpan_hasil_ajax(Request $request, $id)
 
     $kunjungan = Kunjungan::findOrFail($id);
     $calonPelanggan = $kunjungan->calonPelanggan;
-    $sales = auth()->user(); // Ambil data sales yang sedang login
+    $sales = auth()->user(); 
 
     // Upload Foto
     if ($request->hasFile('bukti_foto')) {
@@ -268,7 +271,7 @@ public function simpan_hasil_ajax(Request $request, $id)
         $kunjungan->bukti_foto = $nama_file;
     }
 
-    // UPDATE DI TABEL KUNJUNGAN
+    // 2. UPDATE DATA TERMASUK KOORDINAT GPS
     $kunjungan->kesimpulan = $request->catatan_sales;
     $kunjungan->hasil_kunjungan = $request->hasil_kunjungan;
     $kunjungan->nama_pic = $request->nama_pic;
@@ -277,20 +280,23 @@ public function simpan_hasil_ajax(Request $request, $id)
     $kunjungan->provider_eksisting = $request->provider_eksisting;
     $kunjungan->speed_eksisting = $request->speed_eksisting;
     $kunjungan->tagihan_bulanan = $request->tagihan_bulanan;
+    
+    // SIMPAN TRACKING LOKASI DI SINI
+    $kunjungan->lat_visit = $request->lat_visit;
+    $kunjungan->lng_visit = $request->lng_visit;
+    
     $kunjungan->status = 'Selesai'; 
     $kunjungan->save();
 
+    // Update status di tabel pelanggan
     $statusLangganan = ($request->hasil_kunjungan == 'Berlangganan') ? 'Berlangganan' : 'Belum Berlangganan';
-
     $calonPelanggan->update([
         'status_visit' => 'Sudah Visit',
         'status_langganan' => $statusLangganan
     ]);
 
-    // LOGIKA NOTIFIKASI UNTUK ADMIN & PIMPINAN
-    
+    // LOGIKA NOTIFIKASI
     $penerimaNotif = \App\Models\User::whereIn('role', ['admin', 'pimpinan'])->get();
-    
     foreach ($penerimaNotif as $penerima) {
         \App\Models\Notifikasi::create([
             'user_id' => $penerima->id,
@@ -300,7 +306,6 @@ public function simpan_hasil_ajax(Request $request, $id)
             'url'     => url('/kunjungan'), 
         ]);
     }
-    // ==========================================
 
     return response()->json([
         'status' => true,

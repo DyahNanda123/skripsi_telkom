@@ -1,11 +1,15 @@
 <form action="{{ url('/kunjungan/'.$kunjungan->id.'/simpan_hasil_ajax') }}" method="POST" id="form-hasil" enctype="multipart/form-data">
     @csrf
+    <!-- INPUT HIDDEN UNTUK TRACKING LOKASI -->
+    <input type="hidden" name="lat_visit" id="lat_visit">
+    <input type="hidden" name="lng_visit" id="lng_visit">
+
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 15px;">
             <div class="modal-header bg-warning text-white" style="border-radius: 15px 15px 0 0;">
                 <h5 class="modal-title font-weight-bold"><i class="fas fa-edit mr-2"></i> Form Hasil Kunjungan</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
             <div class="modal-body p-4">
@@ -28,23 +32,27 @@
                                 <p class="font-weight-bold">{{ $kunjungan->calonPelanggan->nama_pelanggan }}</p>
                             </div>
                         </div>
+                        <!-- STATUS TRACKING GPS -->
+                        <div id="gps-status" class="small text-muted border-top pt-2">
+                            <i class="fas fa-spinner fa-spin"></i> Mendeteksi lokasi kunjungan anda...
+                        </div>
                     </div>
                 </div>
 
                 {{-- 2. DATA TEKNIS & KOMPETITOR --}}
                 <h6 class="font-weight-bold text-danger mb-3 border-bottom pb-2">DATA TEKNIS & KOMPETITOR</h6>
-                    <div class="row mb-4">
-                        <div class="col-md-6 form-group">
+                <div class="row mb-4">
+                    <div class="col-md-6 form-group">
                         <label>Nama PIC</label>
-                        <input type="text" name="nama_pic" class="form-control" value="{{ $kunjungan->nama_pic }}"placeholder="Cth: Ibu Dyah">
+                        <input type="text" name="nama_pic" class="form-control" value="{{ $kunjungan->nama_pic }}" placeholder="Cth: Ibu Dyah">
                     </div>
                     <div class="col-md-6 form-group">
                         <label>No. HP PIC</label>
-                        <input type="text" name="no_hp_pic" class="form-control" value="{{ $kunjungan->no_hp_pic }}"placeholder="Cth: 000000000000">
+                        <input type="text" name="no_hp_pic" class="form-control" value="{{ $kunjungan->no_hp_pic }}" placeholder="Cth: 000000000000">
                     </div>
                     <div class="col-md-4 form-group">
                         <label>Kebutuhan Utama</label>
-                        <input type="text" name="kebutuhan_utama" class="form-control" value="{{ $kunjungan->kebutuhan_utama }}"placeholder="Cth: Cepat">
+                        <input type="text" name="kebutuhan_utama" class="form-control" value="{{ $kunjungan->kebutuhan_utama }}" placeholder="Cth: Cepat">
                     </div>
                     <div class="col-md-4 form-group">
                         <label>Provider Eksisting</label>
@@ -86,7 +94,7 @@
             </div>
             <div class="modal-footer bg-light" style="border-radius: 0 0 15px 15px;">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 20px;">Tutup</button>
-                <button type="submit" class="btn btn-primary" style="border-radius: 20px;"><i class="fas fa-save mr-1"></i> Simpan Hasil</button>
+                <button type="submit" class="btn btn-primary" id="btn-simpan" style="border-radius: 20px;"><i class="fas fa-save mr-1"></i> Simpan Hasil</button>
             </div>
         </div>
     </div>
@@ -94,6 +102,20 @@
 
 <script>
     $(document).ready(function() {
+        // --- LOGIKA TRACKING LOKASI OTOMATIS ---
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                $('#lat_visit').val(position.coords.latitude);
+                $('#lng_visit').val(position.coords.longitude);
+                $('#gps-status').html('<span class="text-success"><i class="fas fa-check-circle"></i> Lokasi anda berhasil dikunci otomatis.</span>');
+            }, function(error) {
+                $('#gps-status').html('<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Gagal ambil lokasi. Pastikan GPS menyala!</span>');
+            }, { enableHighAccuracy: true });
+        } else {
+            $('#gps-status').html('<span class="text-danger">Browser tidak mendukung GPS.</span>');
+        }
+
+        // --- AJAX SUBMIT ---
         $('#form-hasil').on('submit', function(e) {
             e.preventDefault();
             
@@ -116,7 +138,9 @@
                             title: 'Berhasil',
                             text: response.message
                         });
-                        dataKunjungan.ajax.reload();
+                        if (typeof dataKunjungan !== 'undefined') {
+                            dataKunjungan.ajax.reload();
+                        }
                     } else {
                         $.each(response.msgField, function(prefix, val) {
                             $('.'+prefix+'-error').text(val[0]);

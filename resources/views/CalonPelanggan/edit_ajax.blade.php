@@ -45,7 +45,12 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="small font-weight-bold text-uppercase">Link Google Maps</label>
-                            <input type="text" name="link_maps" id="link_maps" class="form-control" value="{{ $CalonPelanggan->link_maps }}">
+                            <div class="input-group">
+                                <input type="text" name="link_maps" id="link_maps_edit" class="form-control" value="{{ $CalonPelanggan->link_maps }}" placeholder="http://googleusercontent.com/maps...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#modalPetaEdit">📍 Edit Peta</button>
+                                </div>
+                            </div>
                             <small id="error-link_maps" class="error-text text-danger"></small>
                         </div>
                     </div>
@@ -120,8 +125,26 @@
     </div>
 </form>
 
+<div class="modal fade" id="modalPetaEdit" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1060;">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ubah Lokasi Maps Pelanggan</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-2">1. Gunakan icon kaca pembesar di peta jika ingin pindah lokasi alamat baru.<br>2. <b>Double Click (Klik 2x)</b> pada peta untuk memperbarui titik koordinat lokasi.</p>
+        <div id="mapPickerEdit" style="width: 100%; height: 400px; border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 $(document).ready(function() {
+    // SCRIPT UTAMA AJAX BAWAAN KAMU
     $("#form-edit").on('submit', function(e) {
         e.preventDefault(); 
         
@@ -129,7 +152,7 @@ $(document).ready(function() {
         
         $.ajax({
             url: form.attr('action'),
-            type: "POST", // Method-nya POST, karena spoofing PUT ada di form
+            type: "POST", 
             data: form.serialize(),
             success: function(response) {
                 $('.error-text').text('');
@@ -171,6 +194,104 @@ $(document).ready(function() {
                 console.log(xhr.responseText);
             }
         });
+    });
+
+    // --- SCRIPT BARU: INTEGRASI LEAFLET MAPS PADA FORM EDIT ---
+    var mapEdit;
+    var markerEdit;
+
+    $('#modalPetaEdit').on('shown.bs.modal', function () {
+        var currentLink = $('#link_maps_edit').val();
+        var defaultLat = -7.644872; // Default koordinat Jawa Timur (Magetan/Ngawi sekitar)
+        var defaultLng = 111.326302;
+        var hasOldLocation = false;
+
+        // Mendeteksi koordinat lama dari format URL "maps.google.com/5lat,lng"
+        if (currentLink) {
+            var match = currentLink.match(/com\/5(-?\d+\.\d+),(-?\d+\.\d+)/);
+            if (match) {
+                defaultLat = parseFloat(match[1]);
+                defaultLng = parseFloat(match[2]);
+                hasOldLocation = true;
+            }
+        }
+
+        if (!mapEdit) {
+            mapEdit = L.map('mapPickerEdit').setView([defaultLat, defaultLng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(mapEdit);
+
+            // Jika koordinat lama terdeteksi, berikan pin marker merah
+            if (hasOldLocation) {
+                var redIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+                markerEdit = L.marker([defaultLat, defaultLng], {icon: redIcon}).addTo(mapEdit).bindPopup("Lokasi Toko Saat Ini").openPopup();
+            }
+
+            // Tambah kontrol pencarian alamat (Geocoder)
+            var geocoderEdit = L.Control.geocoder({
+                defaultMarkGeocode: false,
+                placeholder: "Cari alamat baru..."
+            })
+            .on('markgeocode', function(e) {
+                var bbox = e.geocode.bbox;
+                var poly = L.polygon([
+                    bbox.getSouthEast(),
+                    bbox.getNorthEast(),
+                    bbox.getNorthWest(),
+                    bbox.getSouthWest()
+                ]);
+                mapEdit.fitBounds(poly.getBounds());
+            })
+            .addTo(mapEdit);
+
+            // Aksi Double Click untuk mengambil titik koordinat baru
+            mapEdit.on('dblclick', function(e) {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+
+                var googleMapsLink = "https://www.google.com/maps?q=" + lat + "," + lng;
+                $('#link_maps_edit').val(googleMapsLink);
+
+                if (markerEdit) {
+                    mapEdit.removeLayer(markerEdit);
+                }
+                
+                // Gunakan marker default untuk lokasi baru
+                markerEdit = L.marker([lat, lng]).addTo(mapEdit);
+
+                // Otomatis menutup modal peta setelah dipilih
+                $('#modalPetaEdit').modal('hide');
+            });
+        } else {
+            // Jika peta sudah ada, reposisi ke lokasi ter-update
+            mapEdit.setView([defaultLat, defaultLng], 15);
+            if (hasOldLocation) {
+                if (markerEdit) { mapEdit.removeLayer(markerEdit); }
+                var redIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+                markerEdit = L.marker([defaultLat, defaultLng], {icon: redIcon}).addTo(mapEdit).bindPopup("Lokasi Toko Saat Ini").openPopup();
+            }
+        }
+        
+        // Fix rendering peta abu-abu sebagian di modal Bootstrap
+        setTimeout(function() {
+            mapEdit.invalidateSize();
+        }, 200);
     });
 });
 </script>

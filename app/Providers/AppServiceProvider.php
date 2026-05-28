@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Paksa HTTPS ini
-        if (env('APP_ENV') !== 'local') {
+        if (env('APP_ENV') !== 'development') {
             URL::forceScheme('https');
         }
     }

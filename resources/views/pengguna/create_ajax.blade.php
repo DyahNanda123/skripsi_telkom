@@ -82,7 +82,7 @@
                             }
                         });
                         // Refresh tabel otomatis
-                        dataPengguna.ajax.reload();
+                        reloadKeDataTerbaru();
                     } else {
                         $.each(response.msgField, function(prefix, val) {
                             $('#error-'+prefix).text(val[0]);

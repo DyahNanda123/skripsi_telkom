@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Validator; // <-- Tambahkan ini
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -16,6 +16,7 @@ class UserController extends Controller
     {
         $this->middleware('auth');
     }
+
     public function index()
     {
         $breadcrumb = (object) [
@@ -30,9 +31,26 @@ class UserController extends Controller
 
     public function list(Request $request)
     {
-        $users = User::select('id', 'nama_lengkap', 'nip', 'wilayah_kerja', 'status_aktif', 'role')
-        ->orderBy('status_aktif', 'desc') // Memaksa Aktif (1) di atas, dan Non-aktif (0) di bawah
-        ->orderBy('nama_lengkap', 'asc');
+        $users = User::select('id', 'nama_lengkap', 'nip', 'wilayah_kerja', 'status_aktif', 'role');
+
+        /*
+         * PERBAIKAN ORDERING:
+         * Gunakan flag 'is_initial_load' yang dikirim JavaScript untuk membedakan:
+         *   - TRUE  → pertama kali tabel dibuka → urutkan id DESC (data terbaru di atas)
+         *   - FALSE → user klik panah header manual → biarkan DataTables yang urus ordering-nya
+         *
+         * Kenapa tidak pakai !$request->has('order') lagi?
+         * Karena DataTables SELALU mengirim parameter 'order' di setiap request,
+         * termasuk saat pertama kali dimuat, sehingga kondisi has('order') tidak bisa
+         * membedakan "load awal" vs "klik manual".
+         */
+        // Aktif (1) selalu di atas, Inactive (0) selalu di bawah — berlaku di semua kondisi
+        $users->orderBy('status_aktif', 'desc');
+
+        // Setelah itu, load pertama urutkan by id desc (user terbaru di atas dalam grup aktif)
+        if ($request->boolean('is_initial_load')) {
+            $users->orderBy('id', 'desc');
+        }
 
         if ($request->role) {
             $users->where('role', $request->role);
@@ -56,14 +74,12 @@ class UserController extends Controller
             })
             ->addColumn('aksi', function ($user) {
                 if ($user->status_aktif == 1) {
-                    // Jika AKTIF: Semua tombol menyala dan berfungsi normal
                     $btn = '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/edit_ajax').'\')" class="btn btn-sm text-primary" title="Edit"><i class="fas fa-edit"></i></button> ';
                     $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/delete_ajax').'\')" class="btn btn-sm text-danger" title="Nonaktifkan User"><i class="fas fa-power-off"></i></button> ';
                     $btn .= '<button onclick="modalAction(\''.url('/pengguna/'.$user->id.'/show_ajax').'\')" class="btn btn-sm text-dark" title="Detail"><i class="fas fa-eye"></i></button>';
                     
                     return $btn;
                 } else {
-                    // Jika NON-AKTIF: Semua tombol mati (abu-abu, kursor silang, tidak bisa diklik)
                     $btn = '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-edit"></i></button> ';
                     $btn .= '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-power-off"></i></button> ';
                     $btn .= '<button class="btn btn-sm text-secondary" style="cursor: not-allowed;" title="Pengguna tidak aktif" disabled><i class="fas fa-eye"></i></button>';
@@ -87,7 +103,7 @@ class UserController extends Controller
             
             $rules = [
                 'nama_lengkap'  => 'required|string|max:255',
-                'nip'           => 'required|string|max:20|unique:users,nip', // NIP nggak boleh kembar
+                'nip'           => 'required|string|max:20|unique:users,nip', 
                 'email'         => 'nullable|email|max:255|unique:users,email',
                 'password'      => 'required|min:8',
                 'role'          => 'required|in:admin,pimpinan,sales',
@@ -103,20 +119,20 @@ class UserController extends Controller
                 return response()->json([
                     'status'   => false,
                     'message'  => 'Validasi Gagal',
-                    'msgField' => $validator->errors() // Mengirim pesan error per kolom
+                    'msgField' => $validator->errors() 
                 ]);
             }
+
             User::create([
                 'nama_lengkap'  => $request->nama_lengkap,
                 'nip'           => $request->nip,
                 'email'         => $request->email,
-                'password'      => Hash::make($request->password), // Password dienkripsi
+                'password'      => Hash::make($request->password), 
                 'role'          => $request->role,
                 'status_aktif'  => $request->status_aktif,
                 'wilayah_kerja' => $request->wilayah_kerja,
                 'nomor_hp'      => $request->nomor_hp,
                 'alamat'        => $request->alamat
-                // Catatan: foto_profil sengaja dikosongkan, nanti user bisa upload sendiri saat Edit Profil
             ]);
 
             return response()->json([
@@ -146,7 +162,7 @@ class UserController extends Controller
             $rules = [
                 'nama_lengkap'  => 'required|string|max:255',
                 'nip'           => 'required|string|max:20|unique:users,nip,' . $id, 
-                'password'      => 'nullable|min:8', // Boleh kosong
+                'password'      => 'nullable|min:8', 
                 'role'          => 'required|in:admin,pimpinan,sales',
                 'status_aktif'  => 'required|integer',
                 'wilayah_kerja' => 'nullable|string|max:100'
@@ -170,7 +186,6 @@ class UserController extends Controller
                 $user->status_aktif  = $request->status_aktif;
                 $user->wilayah_kerja = $request->wilayah_kerja;
 
-                // Jika user mengetik password baru, maka update. Jika kosong, biarkan password lama.
                 if ($request->filled('password')) {
                     $user->password = Hash::make($request->password);
                 }
@@ -210,71 +225,36 @@ class UserController extends Controller
         return view('pengguna.delete_ajax', ['user' => $user]);
     }
 
-//     public function destroy_ajax(Request $request, string $id)
-// {
-//     if ($request->ajax() || $request->wantsJson()) {
-//         $user = User::find($id);
-        
-//         if ($user) {
+    public function destroy_ajax(Request $request, string $id)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            $user = User::find($id);
             
-//             if ($user->role == 'admin') {
-//                 return response()->json([
-//                     'status' => false,
-//                     'message' => 'Gagal! Akun dengan role Admin tidak boleh dihapus demi keamanan sistem.'
-//                 ]);
-//             }
-//             if ($user->foto_profil && file_exists(storage_path('app/public/' . $user->foto_profil))) {
-//                 unlink(storage_path('app/public/' . $user->foto_profil));
-//             }
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data tidak ditemukan'
+                ]);
+            }
 
-//             $user->delete(); // Hapus datanya dari database
-            
-//             return response()->json([
-//                 'status' => true,
-//                 'message' => 'Data pengguna berhasil dihapus!'
-//             ]);
-//         } else {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'Data tidak ditemukan'
-//             ]);
-//         }
-//     }
-//     return redirect('/');
-// }
+            if ($user->role == 'admin') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Akun Admin tidak boleh dinonaktifkan.'
+                ]);
+            }
 
-public function destroy_ajax(Request $request, string $id)
-{
-    if ($request->ajax() || $request->wantsJson()) {
-        $user = User::find($id);
-        
-        if (!$user) {
+            $user->status_aktif = 0;
+            $user->save();
+
             return response()->json([
-                'status' => false,
-                'message' => 'Data tidak ditemukan'
+                'status' => true,
+                'message' => 'User berhasil dinonaktifkan (tidak dihapus).'
             ]);
         }
 
-        // Proteksi admin
-        if ($user->role == 'admin') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Akun Admin tidak boleh dinonaktifkan.'
-            ]);
-        }
-
-        // ❗ INI INTINYA: BUKAN DELETE
-        $user->status_aktif = 0;
-        $user->save();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'User berhasil dinonaktifkan (tidak dihapus).'
-        ]);
+        return redirect('/');
     }
-
-    return redirect('/');
-}
 
     public function import()
     {
@@ -315,7 +295,7 @@ public function destroy_ajax(Request $request, string $id)
                             'role'          => strtolower($value['C']), 
                             'wilayah_kerja' => $value['D'], 
                             'password'      => Hash::make($value['E']), 
-                            'status_aktif'  => 1, // Otomatis aktif
+                            'status_aktif'  => 1,
                             'created_at'    => now(),
                             'updated_at'    => now(),
                         ];
@@ -349,7 +329,6 @@ public function destroy_ajax(Request $request, string $id)
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Bikin Judul Kolom (Header) - Tambah sampai I
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Nama Lengkap');
         $sheet->setCellValue('C1', 'NIP');

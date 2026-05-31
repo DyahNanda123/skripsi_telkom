@@ -66,7 +66,7 @@
                 <div class="form-group mb-4">
                     <label style="font-size: 14px; font-weight: 500;">Password</label>
                     <input type="password" name="password" class="form-control form-control-custom py-4" placeholder="Masukkan Password" required>
-                    <small class="text-muted mt-1 d-block" style="font-size: 11px;">It must be a combination of minimum 8 letters, numbers, and symbols.</small>
+                    {{-- <small class="text-muted mt-1 d-block" style="font-size: 11px;">It must be a combination of minimum 8 letters, numbers, and symbols.</small> --}}
                 </div>
 
                 <div class="row mt-4">

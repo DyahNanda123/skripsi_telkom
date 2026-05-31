@@ -38,15 +38,17 @@
         <div class="card-header border-0 pb-0 pt-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 
-                {{-- Sisi Kiri: Filter --}}
+                {{-- Sisi Kiri: Filter (Sales tidak bisa filter nama sales lain) --}}
                 <div class="d-flex align-items-center flex-wrap gap-2 mb-2 mb-md-0">
-                    {{-- Filter Nama Sales --}}
-                    <select class="form-control form-control-sm" id="filter_sales" style="width: 150px; border-radius: 20px; margin-right: 8px;">
-                        <option value="">- Semua Sales -</option>
-                        @foreach($sales as $s)
-                            <option value="{{ $s->id }}" {{ request('sales') == $s->id ? 'selected' : '' }}>{{ $s->nama_lengkap }}</option>
-                        @endforeach
-                    </select>
+                    @if(auth()->user()->role != 'sales')
+                        {{-- Filter Nama Sales hanya tampil untuk Admin & Pimpinan --}}
+                        <select class="form-control form-control-sm" id="filter_sales" style="width: 150px; border-radius: 20px; margin-right: 8px;">
+                            <option value="">- Semua Sales -</option>
+                            @foreach($sales as $s)
+                                <option value="{{ $s->id }}" {{ request('sales') == $s->id ? 'selected' : '' }}>{{ $s->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                    @endif
 
                     {{-- Filter Bulan --}}
                     <select class="form-control form-control-sm" id="filter_bulan" style="width: 130px; border-radius: 20px; margin-right: 8px;">
@@ -81,16 +83,16 @@
                             <i class="fas fa-upload"></i> Export
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" style="border-radius: 10px;">
-                            <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}">
+                            <a class="dropdown-item" href="{{ url('/strategi-target/export_excel') }}?sales={{ auth()->user()->role == 'sales' ? auth()->user()->id : request('sales') }}&bulan={{ $bulanFilter }}&tahun={{ $tahunFilter }}">
                                 <i class="fas fa-file-excel text-success mr-2"></i> Excel
                             </a>
-                            <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ request('sales') }}&bulan={{ request('bulan', date('n')) }}&tahun={{ request('tahun', date('Y')) }}" target="_blank">
+                            <a class="dropdown-item" href="{{ url('/strategi-target/export_pdf') }}?sales={{ auth()->user()->role == 'sales' ? auth()->user()->id : request('sales') }}&bulan={{ $bulanFilter }}&tahun={{ $tahunFilter }}" target="_blank">
                                 <i class="fas fa-file-pdf text-danger mr-2"></i> PDF
                             </a>
                         </div>
                     </div>
                     
-                    {{-- TOMBOL ADD KHUSUS PIMPINAN --}}
+                    {{-- TOMBOL UTAMA BERUBAH: KHUSUS PIMPINAN YANG BISA LIHAT & AKSES --}}
                     @if(auth()->user()->role == 'pimpinan')
                         <button class="btn btn-warning btn-sm text-dark" type="button" data-toggle="collapse" data-target="#collapseTargetMassal" style="border-radius: 20px; padding: 5px 15px; font-weight: bold; margin-right: 8px;">
                             <i class="fas fa-users mr-1"></i> Set Target Massal
@@ -107,8 +109,8 @@
         {{-- BODY: ISI KONTEN TARGET & MATERI --}}
         <div class="card-body bg-light mt-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
             
-            {{-- FITUR BARU: FORM TARGET MASSAL (Tersembunyi secara default) --}}
-            @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+            {{-- FORM TARGET MASSAL: SEKARANG HANYA BISA DILIHAT OLEH PIMPINAN --}}
+            @if(auth()->user()->role == 'pimpinan')
             <div class="collapse mb-4" id="collapseTargetMassal">
                 <div class="card card-body border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #dc3545 !important;">
                     <h5 class="font-weight-bold mb-3" style="color: #333;"><i class="fas fa-bullseye text-danger mr-2"></i> Form Target Bulanan Massal</h5>
@@ -181,23 +183,26 @@
                                     <th width="25%">REALISASI (PROGRESS)</th>
                                     <th width="12%">STATUS</th> 
                                     
-                                    {{-- HANYA PIMPINAN YANG BISA LIHAT KOLOM AKSI --}}
-                                    @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+                                    {{-- KOLOM AKSI: SEKARANG HANYA MURNI UNTUK PIMPINAN --}}
+                                    @if(auth()->user()->role == 'pimpinan')
                                         <th width="8%" class="text-center">AKSI</th>
                                     @endif
                                 </tr>
                             </thead>
                             <tbody>
+                                @php $counterNo = 1; @endphp
                                 @forelse($targets as $index => $t)
+                                    {{-- PROTEKSI MAP DATA SISI BLADE: Sales hanya bisa melihat baris data miliknya sendiri --}}
+                                    @if(auth()->user()->role == 'sales' && auth()->user()->id !== $t->user_id)
+                                        @continue
+                                    @endif
+
                                     @php
                                         $namaBulan = ['1'=>'Januari','2'=>'Februari','3'=>'Maret','4'=>'April','5'=>'Mei','6'=>'Juni','7'=>'Juli','8'=>'Agustus','9'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'];
                                         $bulanCetak = $namaBulan[(string)$t->bulan] ?? $t->bulan;
 
-                                        $realisasi = \App\Models\Kunjungan::where('user_id', $t->user_id)
-                                                        ->where('hasil_kunjungan', 'Berlangganan')
-                                                        ->whereYear('created_at', $t->tahun)
-                                                        ->whereMonth('created_at', $t->bulan)
-                                                        ->count(); 
+                                        // <-- NILAI DIAMBIL DARI CONTROLLER, BUKAN QUERY ULANG DI BLADE
+                                        $realisasi = $t->realisasi ?? 0;
                                         
                                         // Hitung Persentase
                                         $persentase = $t->jumlah_target > 0 ? round(($realisasi / $t->jumlah_target) * 100) : 0;
@@ -217,7 +222,7 @@
                                         }
                                     @endphp
                                     <tr>
-                                        <td class="text-center">{{ $index + 1 }}</td>
+                                        <td class="text-center">{{ $counterNo++ }}</td>
                                         <td>
                                             <div class="font-weight-bold text-dark">{{ $t->user ? $t->user->nama_lengkap : 'Data Terhapus' }}</div>
                                             <div class="small text-muted">NIP: {{ $t->user ? $t->user->nip : '-' }}</div>
@@ -251,7 +256,8 @@
                                             @endif
                                         </td>
                                         
-                                        @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+                                        {{-- TOMBOL AKSI TR: BUNGKUS KHUSUS UNTUK ROLE PIMPINAN --}}
+                                        @if(auth()->user()->role == 'pimpinan')
                                             <td class="text-center">
                                                 <div class="d-flex justify-content-center" style="gap: 5px;">
                                                     <button onclick="modalAction('{{ url('/strategi-target/target/' . $t->id . '/edit_ajax') }}')" class="btn-icon-only btn-edit" title="Edit">
@@ -266,7 +272,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-4 text-muted">
+                                        <td colspan="{{ auth()->user()->role == 'pimpinan' ? '7' : '6' }}" class="text-center py-4 text-muted">
                                             <i class="fas fa-box-open mb-2 fa-2x"></i><br>Belum ada data target sales yang ditambahkan.
                                         </td>
                                     </tr>
@@ -322,9 +328,9 @@
                                         </div>
                                     </div>
                                     
-                                    {{-- Sisi Kanan: Tombol Aksi --}}
+                                    {{-- Sisi Kanan: Tombol Aksi (Edit & Hapus dibungkus @if Pimpinan) --}}
                                     <div class="d-flex align-items-center" style="gap: 5px;">
-                                        @if(auth()->user()->role == 'pimpinan' || auth()->user()->role == 'admin')
+                                        @if(auth()->user()->role == 'pimpinan')
                                             <button onclick="modalAction('{{ url('/strategi-target/promo/' . $promo->id . '/edit_ajax') }}')" class="btn-icon-only btn-edit" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -365,7 +371,8 @@
     });
 
     $('#filter_sales, #filter_bulan, #filter_tahun').on('change', function() {
-        var sales_id = $('#filter_sales').val();
+        // Handle proteksi filter jika user login adalah sales
+        var sales_id = $('#filter_sales').length ? $('#filter_sales').val() : "{{ auth()->user()->role == 'sales' ? auth()->user()->id : '' }}";
         var bulan    = $('#filter_bulan').val();
         var tahun    = $('#filter_tahun').val();
         window.location.href = "{{ url('/strategi-target') }}?sales=" + sales_id + "&bulan=" + bulan + "&tahun=" + tahun;

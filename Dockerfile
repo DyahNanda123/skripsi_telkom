@@ -9,6 +9,8 @@ RUN npm run build
 # Tahap 2: Setup PHP & Apache Server
 FROM php:8.3-apache
 
+ENV TZ=Asia/Jakarta
+
 # Install dependensi sistem & ekstensi PHP lengkap (termasuk GD untuk gambar)
 RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git curl libonig-dev libxml2-dev \

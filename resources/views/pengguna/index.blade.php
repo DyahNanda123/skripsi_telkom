@@ -2,28 +2,24 @@
 
 @section('content')
 <style>
-    /* Bikin jarak dalam tabel jadi compact persis kayak halaman Pelanggan */
     #table_pengguna th,
     #table_pengguna td {
         padding: 8px 10px !important; 
         vertical-align: middle !important; 
     }
 
-    /* Mencegah isi kolom action turun ke bawah */
     #table_pengguna td:last-child {
         white-space: nowrap !important;
         text-align: center !important;
     }
 
-    /* Bikin tombol action (Mata, Edit, Hapus) ukurannya imut dan pas */
     #table_pengguna td .btn {
         padding: 0.2rem 0.5rem !important; 
         font-size: 0.85rem !important;       
         border-radius: 4px;
-        margin: 0 2px; /* Kasih jarak dikit antar icon */
+        margin: 0 2px;
     }
 
-    /* Memastikan dropdown export gak ketutup */
     .table-responsive {
         overflow-x: auto;
         overflow-y: visible;
@@ -33,7 +29,6 @@
 <div class="container-fluid">
     <div class="card card-outline card-danger">
         <div class="card-header border-0 pb-0 pt-3">
-            {{-- BAGIAN HEADER: Dibagi 2 sisi persis (Kiri untuk Filter, Kanan untuk Tombol) --}}
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 
                 {{-- Sisi Kiri: Filter --}}
@@ -81,7 +76,6 @@
         </div>
 
         <div class="card-body mt-2">
-            {{-- Tambahan class table-responsive, table-sm, dan text-sm --}}
             <div class="table-responsive">
                 <table class="table table-hover table-striped table-sm text-sm" id="table_pengguna" style="width: 100%;">
                     <thead class="bg-danger text-white">
@@ -111,33 +105,64 @@
     });
 
     var dataPengguna;
+
+    /*
+     * PERBAIKAN ORDERING:
+     * Flag ini yang membedakan "load pertama kali" vs "user klik header manual".
+     *   - true  → request pertama → server akan orderBy id DESC (user terbaru di atas)
+     *   - false → request berikutnya (klik header, ganti page, filter) → server ikuti
+     *             ordering DataTables sesuai kolom yang diklik user
+     */
+    var isInitialLoad = true;
+
     $(document).ready(function() {
         dataPengguna = $('#table_pengguna').DataTable({
-            responsive: true, // Tambahan biar tabelnya responsive
-            autoWidth: false, // Tambahan biar lebar kolomnya rapi
+            responsive: true,
+            autoWidth: false,
             serverSide: true,
             processing: true,
             ordering: true,
+
+            /*
+             * Tidak perlu set 'order' di sini karena urutan awal dikendalikan
+             * sepenuhnya oleh server via flag is_initial_load.
+             * DataTables default: order [[0, 'asc']] tapi karena kolom 0 adalah
+             * DT_RowIndex (orderable: false), DataTables tidak akan mengirim
+             * ORDER BY yang konflik — server tetap pegang kendali di load pertama.
+             */
+            order: [],
+
             ajax: {
                 url: "{{ url('pengguna/list') }}",
                 type: "POST",
                 data: function(d) {
-                    d.role = $('#filter_role').val();
+                    d.role         = $('#filter_role').val();
                     d.status_aktif = $('#filter_status').val();
+
+                    // Kirim flag ke server: apakah ini load pertama?
+                    d.is_initial_load = isInitialLoad;
+
+                    // Setelah request pertama selesai, matikan flag-nya
+                    // supaya klik header manual berikutnya diproses normal
+                    if (isInitialLoad) {
+                        isInitialLoad = false;
+                    }
                 }
             },
             columns: [
-                { data: 'DT_RowIndex', name: 'id', className: 'text-center', orderable: false, searchable: false },
-                { data: 'nama_lengkap', name: 'nama_lengkap' },
-                { data: 'nip', name: 'nip' },
-                { data: 'wilayah_kerja', name: 'wilayah_kerja' },
-                { data: 'status', name: 'status_aktif', className: 'text-center', orderable: false, searchable: false },
-                { data: 'role', name: 'role' },
-                { data: 'aksi', name: 'aksi', className: 'text-center', orderable: false, searchable: false }
+                { data: 'DT_RowIndex',   name: 'id',            className: 'text-center', orderable: false, searchable: false },
+                { data: 'nama_lengkap',  name: 'nama_lengkap',  orderable: true },
+                { data: 'nip',           name: 'nip',           orderable: true },
+                { data: 'wilayah_kerja', name: 'wilayah_kerja', orderable: true },
+                { data: 'status',        name: 'status_aktif',  className: 'text-center', orderable: false, searchable: false },
+                { data: 'role',          name: 'role',          orderable: true },
+                { data: 'aksi',          name: 'aksi',          className: 'text-center', orderable: false, searchable: false }
             ]
         });
 
+        // Saat filter berubah, reset flag supaya data terbaru kembali ke atas
         $('#filter_role, #filter_status').on('change', function() {
+            isInitialLoad = true;
             dataPengguna.ajax.reload();
         });
     });
@@ -146,6 +171,17 @@
         $('#myModal').load(url, function() {
             $('#myModal').modal('show');
         });
+    }
+
+    /*
+     * Panggil fungsi ini setelah berhasil menambah/import user baru,
+     * supaya data terbaru langsung muncul di baris paling atas.
+     * Contoh penggunaan di callback sukses form tambah user:
+     *   reloadKeDataTerbaru();
+     */
+    function reloadKeDataTerbaru() {
+        isInitialLoad = true;
+        dataPengguna.ajax.reload();
     }
 </script>
 @endpush

@@ -1,4 +1,4 @@
-# Tahap 1: Build fail Frontend (Vite/Tailwind)
+# Tahap 1: Build Frontend (Vite/Tailwind)
 FROM node:20 AS frontend
 WORKDIR /app
 COPY package*.json ./
@@ -6,10 +6,10 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Tahap 2: Setup PHP & Apache Server db laravel
+# Tahap 2: Setup PHP & Apache Server
 FROM php:8.3-apache
 
-# Install dependensi sistem asas
+# Install dependensi sistem & ekstensi PHP lengkap (termasuk GD untuk gambar)
 RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git curl libonig-dev libxml2-dev \
     libpng-dev libjpeg-dev libfreetype6-dev \
@@ -30,20 +30,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set direktori kerja
 WORKDIR /var/www/html
 
-# Salin semua fail kod dari GitHub ke dalam pelayan
+# Salin semua fail kod ke dalam container
 COPY . .
 
 # Salin hasil build Vite dari Tahap 1
 COPY --from=frontend /app/public/build ./public/build
 
-# Install pustaka PHP (tanpa dev/testing)
+# Install pustaka PHP (Optimized & No Dev untuk Production)
 RUN composer install --optimize-autoloader --no-dev
 
 # Berikan keizinan tulis (write access) untuk folder storage dan cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # ==========================================
-# SKRIP SIHIR: Auto Migrate & Storage Link
+# SKRIP STARTUP: Auto Migrate & Storage Link
 # ==========================================
 RUN echo '#!/bin/bash\n\
 php artisan storage:link\n\

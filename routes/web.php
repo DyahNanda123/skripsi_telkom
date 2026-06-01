@@ -8,6 +8,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\KunjunganController;
 use App\Http\Controllers\StrategiTargetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotifikasiController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -111,15 +113,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/promo/{id}/delete_ajax', [StrategiTargetController::class, 'delete_promo_ajax']);
         });
 
-    Route::get('/notifikasi/baca/{id}', function($id) {
-    $notif = \App\Models\Notifikasi::find($id);
-    if($notif && auth()->check() && $notif->user_id == auth()->id()) {
-        $notif->is_read = 1; 
-        $notif->save();
-        return redirect($notif->url ?? '/'); 
-    }
-    return back(); 
-});  
+    Route::get('/notifikasi/baca/{id}',
+    [\App\Http\Controllers\NotifikasiController::class, 'baca']
+)->name('notifikasi.baca');
+ 
+// Tambahkan route baru ini:
+Route::post('/notifikasi/tandai-semua-dibaca',
+    [\App\Http\Controllers\NotifikasiController::class, 'tandaiSemuaDibaca']
+)->name('notifikasi.tandaiSemuaDibaca');
+  
 
 // Route::group(['prefix' => 'dashboard'], function () {
 //     Route::get('/', [DashboardController::class, 'index']);

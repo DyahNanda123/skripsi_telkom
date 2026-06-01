@@ -30,14 +30,14 @@
                                     <label class="font-weight-bold text-dark small">KATEGORI</label>
                                     <select class="form-control" name="kategori" required style="border-radius: 8px;">
                                         <option value="">- Pilih Kategori -</option>
-                                        <option value="Brosur">Brosur</option>
-                                        <option value="Flyer">Flyer</option>
-                                        <option value="Video">Video</option>
-                                        <option value="Lainnya">Lainnya</option>
+                                        {{-- VALUE HARUS HURUF KECIL SESUAI DATABASE --}}
+                                        <option value="brosur">Brosur</option>
+                                        <option value="poster">Poster</option>
+                                        <option value="presentasi">Presentasi</option>
+                                        <option value="lainnya">Lainnya</option>
                                     </select>
                                     <small id="error-kategori" class="error-text form-text text-danger"></small>
                                 </div>
-                                                                {{-- TAMBAHKAN INI: Input Tanggal Kadaluwarsa --}}
                                 <div class="form-group">
                                     <label class="font-weight-bold text-dark small">TANGGAL KADALUWARSA</label>
                                     <input type="date" class="form-control" name="tanggal_kadaluwarsa" required style="border-radius: 8px;" min="{{ date('Y-m-d') }}">

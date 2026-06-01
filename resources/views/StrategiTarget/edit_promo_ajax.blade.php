@@ -33,9 +33,9 @@
                                 <div class="form-group mb-3">
                                     <label class="small font-weight-bold text-muted mb-1">KATEGORI</label>
                                     <select name="kategori" class="form-control" style="border-radius: 8px;">
+                                        {{-- VALUE HARUS HURUF KECIL SESUAI DATABASE --}}
                                         <option value="brosur" {{ $promo->kategori == 'brosur' ? 'selected' : '' }}>Brosur</option>
                                         <option value="poster" {{ $promo->kategori == 'poster' ? 'selected' : '' }}>Poster</option>
-                                        <option value="video" {{ $promo->kategori == 'video' ? 'selected' : '' }}>Video</option>
                                         <option value="presentasi" {{ $promo->kategori == 'presentasi' ? 'selected' : '' }}>Presentasi</option>
                                         <option value="lainnya" {{ $promo->kategori == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
                                     </select>

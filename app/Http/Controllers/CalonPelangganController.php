@@ -130,6 +130,23 @@ class CalonPelangganController extends Controller
         ]);
     }
 
+    $duplikat = CalonPelanggan::whereRaw(
+            'LOWER(TRIM(nama_pelanggan)) = ?',
+            [strtolower(trim($request->nama_pelanggan))]
+        )
+        ->whereRaw(
+            'LOWER(TRIM(alamat)) = ?',
+            [strtolower(trim($request->alamat))]
+        )
+        ->exists();
+
+    if ($duplikat) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Data calon pelanggan dengan nama dan alamat yang sama sudah terdaftar.'
+        ]);
+    }
+
     CalonPelanggan::create($validator->validated());
 
     return response()->json([
@@ -152,51 +169,71 @@ class CalonPelangganController extends Controller
 
     // 5. Menyimpan Perubahan Data 
     public function update_ajax(Request $request, $id)
-    {
-        if ($request->ajax() || $request->wantsJson()) {
-            
-            $rules = [
-                'nama_pelanggan'   => 'required|string|max:100',
-                'alamat'           => 'required|string',
-                'jenis_pelanggan'  => 'nullable|string',
-                'link_maps'        => 'nullable|string',
-                'status_langganan' => 'required|string',
-                'status_visit'     => 'required|string',
-                'wilayah'          => 'nullable|string',
-                'sto'              => 'nullable|string',
-            ];
+{
+    if ($request->ajax() || $request->wantsJson()) {
 
-            $validator = Validator::make($request->all(), $rules);
+        $rules = [
+            'nama_pelanggan'   => 'required|string|max:100',
+            'alamat'           => 'required|string',
+            'jenis_pelanggan'  => 'nullable|string',
+            'link_maps'        => 'nullable|string',
+            'status_langganan' => 'required|string',
+            'status_visit'     => 'required|string',
+            'wilayah'          => 'nullable|string',
+            'sto'              => 'nullable|string',
+        ];
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status'   => false,
-                    'message'  => 'Validasi Gagal',
-                    'msgField' => $validator->errors()
-                ]);
-            }
+        $validator = Validator::make($request->all(), $rules);
 
-            $CalonPelanggan = CalonPelanggan::find($id);
-            if ($CalonPelanggan) {
-                $CalonPelanggan->nama_pelanggan = $request->nama_pelanggan;
-                $CalonPelanggan->alamat = $request->alamat;
-                $CalonPelanggan->jenis_pelanggan = $request->jenis_pelanggan;
-                $CalonPelanggan->link_maps = $request->link_maps;
-                $CalonPelanggan->status_langganan = $request->status_langganan;
-                $CalonPelanggan->status_visit = $request->status_visit;
-                $CalonPelanggan->wilayah = $request->wilayah;
-                $CalonPelanggan->sto = $request->sto;
-
-                $CalonPelanggan->save();
-
-                return response()->json([
-                    'status'  => true,
-                    'message' => 'Data pelanggan berhasil diperbarui!'
-                ]);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'status'   => false,
+                'message'  => 'Validasi Gagal',
+                'msgField' => $validator->errors()
+            ]);
         }
-        return redirect('/');
+
+        $duplikat = CalonPelanggan::whereRaw(
+                'LOWER(TRIM(nama_pelanggan)) = ?',
+                [strtolower(trim($request->nama_pelanggan))]
+            )
+            ->whereRaw(
+                'LOWER(TRIM(alamat)) = ?',
+                [strtolower(trim($request->alamat))]
+            )
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($duplikat) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data calon pelanggan dengan nama dan alamat yang sama sudah terdaftar.'
+            ]);
+        }
+
+        $CalonPelanggan = CalonPelanggan::find($id);
+
+        if ($CalonPelanggan) {
+            $CalonPelanggan->nama_pelanggan = $request->nama_pelanggan;
+            $CalonPelanggan->alamat = $request->alamat;
+            $CalonPelanggan->jenis_pelanggan = $request->jenis_pelanggan;
+            $CalonPelanggan->link_maps = $request->link_maps;
+            $CalonPelanggan->status_langganan = $request->status_langganan;
+            $CalonPelanggan->status_visit = $request->status_visit;
+            $CalonPelanggan->wilayah = $request->wilayah;
+            $CalonPelanggan->sto = $request->sto;
+
+            $CalonPelanggan->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Data pelanggan berhasil diperbarui!'
+            ]);
+        }
     }
+
+    return redirect('/');
+}
 
     public function show_ajax(string $id)
     {
@@ -257,67 +294,110 @@ class CalonPelangganController extends Controller
 
     // 10. Memproses Data dari Excel 
     public function import_ajax(Request $request)
-    {
-        if ($request->ajax() || $request->wantsJson()) {
-            $rules = [
-                'file_calon_pelanggan' => ['required', 'mimes:xlsx', 'max:1024']
-            ];
+{
+    if ($request->ajax() || $request->wantsJson()) {
 
-            $validator = Validator::make($request->all(), $rules);
-            
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validasi Gagal',
-                    'msgField' => $validator->errors()
-                ]);
-            }
+        $rules = [
+            'file_calon_pelanggan' => ['required', 'mimes:xlsx', 'max:1024']
+        ];
 
-            $file = $request->file('file_calon_pelanggan');
-            $reader = IOFactory::createReader('Xlsx');
-            $reader->setReadDataOnly(true);
-            $spreadsheet = $reader->load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            
-            $data = $sheet->toArray(null, false, true, true);
-            $insert = [];
+        $validator = Validator::make($request->all(), $rules);
 
-            if (count($data) > 1) { 
-                foreach ($data as $baris => $value) {
-                    if ($baris > 1) {
-                        $insert[] = [
-                            'nama_pelanggan'   => $value['A'], // Kolom A di Excel
-                            'alamat'           => $value['B'], // Kolom B
-                            'wilayah'          => $value['C'], // Kolom C
-                            'sto'              => $value['D'], // Kolom D
-                            'jenis_pelanggan'  => $value['E'], // Kolom C
-                            'link_maps'        => $value['F'], // Kolom D
-                            'status_langganan' => $value['G'], // Kolom E
-                            'status_visit'     => $value['H'], // Kolom F
-                            'created_at'       => now(),
-                            'updated_at'       => now(),
-                        ];
-                    }
-                }
-
-                if (count($insert) > 0) {
-                    CalonPelanggan::insertOrIgnore($insert);
-                }
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Data Calon Pelanggan berhasil diimport!'
-                ]);
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Tidak ada data di dalam file Excel yang diunggah.'
-                ]);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi Gagal',
+                'msgField' => $validator->errors()
+            ]);
         }
-        
-        return redirect('/');
+
+        $file = $request->file('file_calon_pelanggan');
+
+        $reader = IOFactory::createReader('Xlsx');
+        $reader->setReadDataOnly(true);
+
+        $spreadsheet = $reader->load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $data = $sheet->toArray(null, false, true, true);
+
+        $insert = [];
+        $processed = []; // cek duplikat dalam file excel yang sama
+
+        if (count($data) > 1) {
+
+            foreach ($data as $baris => $value) {
+
+                // Lewati header
+                if ($baris <= 1) {
+                    continue;
+                }
+
+                $nama = strtolower(trim($value['A'] ?? ''));
+                $alamat = strtolower(trim($value['B'] ?? ''));
+
+                // Lewati baris kosong
+                if (empty($nama) || empty($alamat)) {
+                    continue;
+                }
+
+                // Key unik nama + alamat
+                $key = $nama . '|' . $alamat;
+
+                // Cek duplikat dalam file yang sama
+                if (in_array($key, $processed)) {
+                    continue;
+                }
+
+                // Cek duplikat di database
+                $duplikatDb = CalonPelanggan::whereRaw(
+                        'LOWER(TRIM(nama_pelanggan)) = ?',
+                        [$nama]
+                    )
+                    ->whereRaw(
+                        'LOWER(TRIM(alamat)) = ?',
+                        [$alamat]
+                    )
+                    ->exists();
+
+                if ($duplikatDb) {
+                    continue;
+                }
+
+                $processed[] = $key;
+
+                $insert[] = [
+                    'nama_pelanggan'   => trim($value['A']),
+                    'alamat'           => trim($value['B']),
+                    'wilayah'          => trim($value['C'] ?? ''),
+                    'sto'              => trim($value['D'] ?? ''),
+                    'jenis_pelanggan'  => trim($value['E'] ?? ''),
+                    'link_maps'        => trim($value['F'] ?? ''),
+                    'status_langganan' => trim($value['G'] ?? ''),
+                    'status_visit'     => trim($value['H'] ?? ''),
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ];
+            }
+
+            if (count($insert) > 0) {
+                CalonPelanggan::insert($insert);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => count($insert) . ' data berhasil diimport. Data duplikat otomatis dilewati.'
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Tidak ada data di dalam file Excel yang diunggah.'
+        ]);
     }
+
+    return redirect('/');
+}
 
     // 11. Meng-export Data ke Excel
     public function export_excel()

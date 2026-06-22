@@ -162,7 +162,7 @@ class DashboardController extends Controller
         return view('dashboard.admin', compact(
             'breadcrumb', 'activeMenu', 'bulan', 'tahun', 'totalVisit', 'customerPS', 'konversiProspek', 'growth',
             'labelBulan', 'dataVisitGrafik', 'dataPSGrafik', 'topSales', 'totalTargetRencana', 'pencapaianTarget',
-            'labelSTO', 'dataSTO' // <-- Nah, ini dia tiket masuknya biar ga error lagi!
+            'labelSTO', 'dataSTO' 
         ));
     }
 }

@@ -119,13 +119,42 @@
                     </button>
                 
                 @elseif($CalonPelanggan->status_visit == 'Sudah Visit')
-                    {{-- Kalau udah selesai dikunjungi --}}
-                    <button type="button" class="btn btn-secondary px-4 mr-2 disabled" style="border-radius: 8px; cursor: not-allowed;">
-                        <i class="fas fa-check-circle"></i> Kunjungan Selesai
-                    </button>
+                    
+                    {{-- LOGIKA COOLING OFF PERIOD (FOLLOW UP) --}}
+                    @if($CalonPelanggan->status_langganan == 'Belum Berlangganan')
+                        @php
+                            // Atur masa jeda (contoh: 30 hari)
+                            $cooldownDays = 30;
+                            // Hitung selisih hari dari terakhir kali di-update
+                            $hariBerlalu = $CalonPelanggan->updated_at ? $CalonPelanggan->updated_at->diffInDays(now()) : $cooldownDays;
+                            // Hitung sisa harinya
+                            $sisaHari = $cooldownDays - $hariBerlalu;
+                        @endphp
+
+                        @if($sisaHari > 0)
+                            {{-- Jika belum 30 hari, tombol mati dan tampilkan sisa hari --}}
+                            <button type="button" class="btn btn-secondary px-4 mr-2 disabled" style="border-radius: 8px; cursor: not-allowed;">
+                                <i class="fas fa-clock"></i> Follow-up ({{ $sisaHari }} hari lagi)
+                            </button>
+                        @else
+                            {{-- Jika sudah lewat masa jeda, bisa mulai kunjungan ulang (Follow up) --}}
+                            <form action="{{ url('/kunjungan/mulai/' . $CalonPelanggan->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-primary px-4 mr-2" style="border-radius: 8px;">
+                                    <i class="fas fa-redo"></i> Follow-up Sekarang
+                                </button>
+                            </form>
+                        @endif
+
+                    @else
+                        {{-- Kalau statusnya 'Berlangganan', yaudah beneran ditutup --}}
+                        <button type="button" class="btn btn-secondary px-4 mr-2 disabled" style="border-radius: 8px; cursor: not-allowed;">
+                            <i class="fas fa-check-circle"></i> Kunjungan Selesai
+                        </button>
+                    @endif
                 
                 @else
-                    {{-- Kalau masih perawan (Belum Visit) --}}
+                    {{-- Kalau masih perawan (Belum Visit / Follow Up) --}}
                     <form action="{{ url('/kunjungan/mulai/' . $CalonPelanggan->id) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success px-4 mr-2" style="border-radius: 8px;">

@@ -184,16 +184,23 @@ $(document).on('submit', '#form-tambah', function(e) {
                 });
 
             } else {
-              
-                $.each(response.msgField, function(key, value) {
-                    $('#error-' + key).text(value[0]);
-                });
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal',
-                    text: response.message
-                });
+                $('#myModal').modal('hide');
+                $('#modalPeta').modal('hide');
+
+                setTimeout(function() {
+
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                    $('body').css('padding-right', '');
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: response.message
+                    });
+
+                }, 300);
             }
         },
         error: function(xhr) {
